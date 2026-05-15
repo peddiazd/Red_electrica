@@ -2,93 +2,147 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Red Eléctrica Inteligente — UCC 2026</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0c12;color:#e0e0e0;font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
-.container{max-width:700px;width:100%}
-.header{text-align:center;margin-bottom:3rem}
-.badge{display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;background:#052e16;color:#4ade80;border:1px solid #166534;margin-bottom:1rem}
-h1{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}
-.subtitle{font-size:13px;color:#4a5080}
-.main-card{background:#12151f;border:1px solid #1e2235;border-radius:12px;padding:2rem;margin-bottom:1.5rem;text-align:center}
-.main-btn{display:inline-block;padding:14px 32px;background:#166534;border:1px solid #4ade80;border-radius:8px;color:#4ade80;font-size:14px;font-weight:700;text-decoration:none;font-family:'Courier New',monospace;transition:all .2s}
-.main-btn:hover{background:#4ade80;color:#052e16}
-.main-desc{font-size:12px;color:#4a5080;margin-top:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
-.card{background:#12151f;border:1px solid #1e2235;border-radius:8px;padding:1.25rem}
-.card-title{font-size:10px;color:#4a5080;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
-.file-link{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1e2235;font-size:12px;color:#9ca3af;text-decoration:none;transition:color .15s}
-.file-link:last-child{border-bottom:none}
-.file-link:hover{color:#4ade80}
-.file-icon{font-size:14px;width:20px;text-align:center}
-.metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:1rem}
-.metric{background:#0a0c12;border-radius:6px;padding:8px;text-align:center;border:1px solid #1e2235}
-.ml{font-size:10px;color:#4a5080;margin-bottom:2px}
-.mv{font-size:16px;font-weight:700}
-.g{color:#4ade80}.a{color:#fbbf24}.b{color:#60a5fa}
-.footer{text-align:center;font-size:11px;color:#374151;margin-top:2rem}
-.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;margin:2px}
-.tag.green{background:#052e16;color:#4ade80;border:1px solid #166534}
-.tag.blue{background:#0c1e3a;color:#60a5fa;border:1px solid #1d4ed8}
-.tag.red{background:#1c0505;color:#f87171;border:1px solid #991b1b}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;min-height:100vh;padding:2rem}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:860px;margin:0 auto}
+.top{text-align:center;padding:3rem 0 2.5rem}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:11px;background:#161b22;color:#58a6ff;border:1px solid #30363d;margin-bottom:1.2rem;letter-spacing:.06em}
+.top h1{font-size:32px;font-weight:600;color:#e6edf3;margin-bottom:.5rem;letter-spacing:-.02em}
+.top p{font-size:14px;color:#8b949e;line-height:1.6}
+.main-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:2rem;margin:1.5rem 0;text-align:center}
+.main-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:#238636;border:1px solid #3fb950;border-radius:8px;color:#fff;font-size:14px;font-weight:500;transition:all .2s;cursor:pointer}
+.main-btn:hover{background:#2ea043}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1.5rem}
+.metric{background:#0d1117;border-radius:8px;padding:12px;border:1px solid #21262d}
+.ml{font-size:11px;color:#8b949e;margin-bottom:4px}
+.mv{font-size:20px;font-weight:600}
+.g{color:#3fb950}.b{color:#58a6ff}.a{color:#e3b341}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.5rem 0}
+.card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:1.25rem}
+.card-title{font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.file-link{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;font-size:13px;color:#c9d1d9;transition:all .15s;border:1px solid transparent}
+.file-link:hover{background:#21262d;border-color:#30363d;color:#58a6ff}
+.file-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.file-ext{margin-left:auto;font-size:10px;color:#8b949e;background:#21262d;padding:2px 6px;border-radius:4px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:1rem}
+.tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.tag-green{background:#0f2d1a;color:#3fb950;border:1px solid #1a4a2a}
+.tag-blue{background:#0d1f3c;color:#58a6ff;border:1px solid #1a3a5c}
+.tag-red{background:#2d0f0f;color:#f85149;border:1px solid #4a1a1a}
+.tag-amber{background:#2d1f0a;color:#e3b341;border:1px solid #4a3510}
+.divider{border:none;border-top:1px solid #21262d;margin:1.5rem 0}
+.footer{text-align:center;font-size:12px;color:#484f58;padding:2rem 0 1rem}
+.status-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0f2d1a;border:1px solid #1a4a2a;border-radius:6px;font-size:12px;color:#3fb950;margin-top:1rem}
+.dot{width:7px;height:7px;border-radius:50%;background:#3fb950;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <div class="badge">Universidad Cooperativa de Colombia · 2026</div>
-    <h1>Red Eléctrica Inteligente</h1>
-    <div class="subtitle">Estructura de Datos · Árbol de Expansión Mínima · Docente: Diego León Arcila Herrera</div>
+<div class="wrap">
+  <div class="top">
+    <div class="badge">Universidad Cooperativa de Colombia &middot; Estructura de Datos 2026</div>
+    <h1>Simulador de Red El&eacute;ctrica Inteligente</h1>
+    <p>Docente: Diego Le&oacute;n Arcila Herrera &nbsp;&middot;&nbsp; &Aacute;rboles de Expansi&oacute;n M&iacute;nima (MST)</p>
   </div>
 
   <div class="main-card">
-    <a href="app.html" class="main-btn">⚡ Abrir Simulador Interactivo</a>
-    <div class="main-desc">Visualización en tiempo real · Simulación de fallos · MST con Kruskal y Prim</div>
+    <a href="app.html" class="main-btn">&#9889; Abrir Simulador Interactivo</a>
+    <div class="status-bar" style="max-width:360px;margin:1rem auto 0">
+      <div class="dot"></div>
+      Red operativa &mdash; MST &oacute;ptimo calculado con Kruskal
+    </div>
     <div class="metrics">
       <div class="metric"><div class="ml">Costo MST</div><div class="mv g">$427M</div></div>
-      <div class="metric"><div class="ml">Red completa</div><div class="mv b">$1255M</div></div>
+      <div class="metric"><div class="ml">Red completa</div><div class="mv b">$1,255M</div></div>
       <div class="metric"><div class="ml">Ahorro</div><div class="mv a">$828M</div></div>
     </div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <div class="card-title">Código fuente</div>
-      <a href="src/grafo.py" class="file-link"><span class="file-icon">🐍</span>grafo.py</a>
-      <a href="src/union_find.py" class="file-link"><span class="file-icon">🐍</span>union_find.py</a>
-      <a href="src/kruskal.py" class="file-link"><span class="file-icon">🐍</span>kruskal.py</a>
-      <a href="src/prim.py" class="file-link"><span class="file-icon">🐍</span>prim.py</a>
-      <a href="src/articulacion.py" class="file-link"><span class="file-icon">🐍</span>articulacion.py</a>
-      <a href="src/simulacion.py" class="file-link"><span class="file-icon">🐍</span>simulacion.py</a>
-      <a href="src/visualizacion.py" class="file-link"><span class="file-icon">🐍</span>visualizacion.py</a>
+      <div class="card-title">&#128187; C&oacute;digo fuente</div>
+      <a href="viewer.html?file=src/grafo.py&title=grafo.py" class="file-link">
+        <span class="file-icon">&#128013;</span>grafo.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=src/union_find.py&title=union_find.py" class="file-link">
+        <span class="file-icon">&#128013;</span>union_find.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=src/kruskal.py&title=kruskal.py" class="file-link">
+        <span class="file-icon">&#128013;</span>kruskal.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=src/prim.py&title=prim.py" class="file-link">
+        <span class="file-icon">&#128013;</span>prim.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=src/articulacion.py&title=articulacion.py" class="file-link">
+        <span class="file-icon">&#128013;</span>articulacion.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=src/simulacion.py&title=simulacion.py" class="file-link">
+        <span class="file-icon">&#128013;</span>simulacion.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=src/visualizacion.py&title=visualizacion.py" class="file-link">
+        <span class="file-icon">&#128013;</span>visualizacion.py
+        <span class="file-ext">py</span>
+      </a>
+      <a href="viewer.html?file=tests/test_algoritmos.py&title=test_algoritmos.py" class="file-link">
+        <span class="file-icon">&#9989;</span>test_algoritmos.py
+        <span class="file-ext">py</span>
+      </a>
     </div>
 
     <div class="card">
-      <div class="card-title">Documentación</div>
-      <a href="docs/documento_analisis.md" class="file-link"><span class="file-icon">📄</span>documento_analisis.md</a>
-      <a href="docs/red_normal.png" class="file-link"><span class="file-icon">🖼</span>red_normal.png</a>
-      <a href="docs/red_fallo_S1_S2.png" class="file-link"><span class="file-icon">🖼</span>red_fallo_S1_S2.png</a>
-      <a href="AGENTS.md" class="file-link"><span class="file-icon">🤖</span>AGENTS.md</a>
-      <a href="prompts/historial_prompts.md" class="file-link"><span class="file-icon">💬</span>historial_prompts.md</a>
-      <a href="tests/test_algoritmos.py" class="file-link"><span class="file-icon">✅</span>test_algoritmos.py</a>
-      <a href="README.md" class="file-link"><span class="file-icon">📘</span>README.md</a>
+      <div class="card-title">&#128196; Documentaci&oacute;n</div>
+      <a href="viewer.html?file=docs/documento_analisis.md&title=Documento+de+An%C3%A1lisis" class="file-link">
+        <span class="file-icon">&#128221;</span>Documento de an&aacute;lisis
+        <span class="file-ext">md</span>
+      </a>
+      <a href="viewer.html?file=AGENTS.md&title=AGENTS.md" class="file-link">
+        <span class="file-icon">&#129302;</span>AGENTS.md
+        <span class="file-ext">md</span>
+      </a>
+      <a href="viewer.html?file=prompts/historial_prompts.md&title=Historial+de+Prompts" class="file-link">
+        <span class="file-icon">&#128172;</span>Historial de prompts
+        <span class="file-ext">md</span>
+      </a>
+      <a href="viewer.html?file=README.md&title=README" class="file-link">
+        <span class="file-icon">&#128218;</span>README.md
+        <span class="file-ext">md</span>
+      </a>
+      <hr class="divider" style="margin:.75rem 0">
+      <a href="docs/red_normal.png" target="_blank" class="file-link">
+        <span class="file-icon">&#128247;</span>red_normal.png
+        <span class="file-ext">png</span>
+      </a>
+      <a href="docs/red_fallo_S1_S2.png" target="_blank" class="file-link">
+        <span class="file-icon">&#128247;</span>red_fallo_S1&ndash;S2.png
+        <span class="file-ext">png</span>
+      </a>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">Algoritmos implementados</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-      <span class="tag green">Kruskal + Union-Find</span>
-      <span class="tag green">Prim + Min-Heap</span>
-      <span class="tag blue">DFS — Nodos de articulación</span>
-      <span class="tag blue">BFS — Ruta alternativa</span>
-      <span class="tag red">Simulación de fallos</span>
+    <div class="card-title">&#9881; Algoritmos implementados</div>
+    <div class="tags">
+      <span class="tag tag-green">Kruskal + Union-Find</span>
+      <span class="tag tag-green">Prim + Min-Heap</span>
+      <span class="tag tag-blue">DFS &mdash; Nodos de articulaci&oacute;n</span>
+      <span class="tag tag-blue">BFS &mdash; Ruta alternativa</span>
+      <span class="tag tag-red">Simulaci&oacute;n de fallos en tiempo real</span>
+      <span class="tag tag-amber">Visualizaci&oacute;n interactiva</span>
     </div>
   </div>
 
   <div class="footer">
-    Actividad 5 · Estructura de Datos 2026 · Universidad Cooperativa de Colombia
+    Actividad 5 &middot; Estructura de Datos 2026 &middot; Universidad Cooperativa de Colombia
   </div>
 </div>
 </body>
