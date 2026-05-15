@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Red Eléctrica Inteligente — UCC 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0c12;color:#e0e0e0;font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.container{max-width:700px;width:100%}
+.header{text-align:center;margin-bottom:3rem}
+.badge{display:inline-block;padding:4px 12px;border-radius:4px;font-size:11px;background:#052e16;color:#4ade80;border:1px solid #166534;margin-bottom:1rem}
+h1{font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}
+.subtitle{font-size:13px;color:#4a5080}
+.main-card{background:#12151f;border:1px solid #1e2235;border-radius:12px;padding:2rem;margin-bottom:1.5rem;text-align:center}
+.main-btn{display:inline-block;padding:14px 32px;background:#166534;border:1px solid #4ade80;border-radius:8px;color:#4ade80;font-size:14px;font-weight:700;text-decoration:none;font-family:'Courier New',monospace;transition:all .2s}
+.main-btn:hover{background:#4ade80;color:#052e16}
+.main-desc{font-size:12px;color:#4a5080;margin-top:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.card{background:#12151f;border:1px solid #1e2235;border-radius:8px;padding:1.25rem}
+.card-title{font-size:10px;color:#4a5080;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.file-link{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1e2235;font-size:12px;color:#9ca3af;text-decoration:none;transition:color .15s}
+.file-link:last-child{border-bottom:none}
+.file-link:hover{color:#4ade80}
+.file-icon{font-size:14px;width:20px;text-align:center}
+.metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:1rem}
+.metric{background:#0a0c12;border-radius:6px;padding:8px;text-align:center;border:1px solid #1e2235}
+.ml{font-size:10px;color:#4a5080;margin-bottom:2px}
+.mv{font-size:16px;font-weight:700}
+.g{color:#4ade80}.a{color:#fbbf24}.b{color:#60a5fa}
+.footer{text-align:center;font-size:11px;color:#374151;margin-top:2rem}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;margin:2px}
+.tag.green{background:#052e16;color:#4ade80;border:1px solid #166534}
+.tag.blue{background:#0c1e3a;color:#60a5fa;border:1px solid #1d4ed8}
+.tag.red{background:#1c0505;color:#f87171;border:1px solid #991b1b}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">Universidad Cooperativa de Colombia · 2026</div>
+    <h1>Red Eléctrica Inteligente</h1>
+    <div class="subtitle">Estructura de Datos · Árbol de Expansión Mínima · Docente: Diego León Arcila Herrera</div>
+  </div>
+
+  <div class="main-card">
+    <a href="app.html" class="main-btn">⚡ Abrir Simulador Interactivo</a>
+    <div class="main-desc">Visualización en tiempo real · Simulación de fallos · MST con Kruskal y Prim</div>
+    <div class="metrics">
+      <div class="metric"><div class="ml">Costo MST</div><div class="mv g">$427M</div></div>
+      <div class="metric"><div class="ml">Red completa</div><div class="mv b">$1255M</div></div>
+      <div class="metric"><div class="ml">Ahorro</div><div class="mv a">$828M</div></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">Código fuente</div>
+      <a href="src/grafo.py" class="file-link"><span class="file-icon">🐍</span>grafo.py</a>
+      <a href="src/union_find.py" class="file-link"><span class="file-icon">🐍</span>union_find.py</a>
+      <a href="src/kruskal.py" class="file-link"><span class="file-icon">🐍</span>kruskal.py</a>
+      <a href="src/prim.py" class="file-link"><span class="file-icon">🐍</span>prim.py</a>
+      <a href="src/articulacion.py" class="file-link"><span class="file-icon">🐍</span>articulacion.py</a>
+      <a href="src/simulacion.py" class="file-link"><span class="file-icon">🐍</span>simulacion.py</a>
+      <a href="src/visualizacion.py" class="file-link"><span class="file-icon">🐍</span>visualizacion.py</a>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Documentación</div>
+      <a href="docs/documento_analisis.md" class="file-link"><span class="file-icon">📄</span>documento_analisis.md</a>
+      <a href="docs/red_normal.png" class="file-link"><span class="file-icon">🖼</span>red_normal.png</a>
+      <a href="docs/red_fallo_S1_S2.png" class="file-link"><span class="file-icon">🖼</span>red_fallo_S1_S2.png</a>
+      <a href="AGENTS.md" class="file-link"><span class="file-icon">🤖</span>AGENTS.md</a>
+      <a href="prompts/historial_prompts.md" class="file-link"><span class="file-icon">💬</span>historial_prompts.md</a>
+      <a href="tests/test_algoritmos.py" class="file-link"><span class="file-icon">✅</span>test_algoritmos.py</a>
+      <a href="README.md" class="file-link"><span class="file-icon">📘</span>README.md</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Algoritmos implementados</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+      <span class="tag green">Kruskal + Union-Find</span>
+      <span class="tag green">Prim + Min-Heap</span>
+      <span class="tag blue">DFS — Nodos de articulación</span>
+      <span class="tag blue">BFS — Ruta alternativa</span>
+      <span class="tag red">Simulación de fallos</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    Actividad 5 · Estructura de Datos 2026 · Universidad Cooperativa de Colombia
+  </div>
+</div>
+</body>
+</html>
