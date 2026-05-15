@@ -564,10 +564,8 @@ cv.addEventListener('mousemove',ev=>{
 });
 
 cv.addEventListener('mouseup',ev=>{
-  if(dragging&&!dragMoved){
-    // fue un clic, no arrastre
-    const n=dragging;dragging=null;cv.style.cursor='crosshair';
-    handleNodeClick(n);return;
+  if(dragging&&dragMoved){
+    dragging=null;cv.style.cursor='crosshair';draw();return;
   }
   dragging=null;cv.style.cursor='crosshair';
 });
