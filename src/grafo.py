@@ -5,6 +5,8 @@ def generar_red_electrica(seed=42):
     Genera una red eléctrica con 15 subestaciones (S1-S15)
     y 25 líneas de transmisión con costos aleatorios entre
     10 y 100 millones de pesos.
+    Garantiza que cada nodo tenga mínimo 2 conexiones para
+    que ninguna subestación quede sin respaldo ante un fallo.
 
     Retorna:
         grafo: dict con lista de adyacencia {nodo: [(vecino, peso)]}
@@ -17,7 +19,7 @@ def generar_red_electrica(seed=42):
     aristas_existentes = set()
     aristas = []
 
-    # Paso 1: garantizar conectividad con árbol generador aleatorio
+    # Paso 1: árbol generador para garantizar conectividad
     nodos_conectados = [nodos[0]]
     nodos_restantes = nodos[1:]
 
@@ -31,7 +33,23 @@ def generar_red_electrica(seed=42):
         aristas.append((peso, nodo, vecino))
         nodos_conectados.append(nodo)
 
-    # Paso 2: agregar aristas hasta completar 25
+    # Paso 2: garantizar mínimo 2 conexiones por nodo
+    for nodo in nodos:
+        if len(grafo[nodo]) < 2:
+            # Buscar un nodo diferente con quien conectarse
+            candidatos = [n for n in nodos
+                         if n != nodo
+                         and tuple(sorted([nodo, n])) not in aristas_existentes]
+            if candidatos:
+                vecino = random.choice(candidatos)
+                peso = random.randint(10, 100)
+                grafo[nodo].append((vecino, peso))
+                grafo[vecino].append((nodo, peso))
+                par = tuple(sorted([nodo, vecino]))
+                aristas_existentes.add(par)
+                aristas.append((peso, nodo, vecino))
+
+    # Paso 3: agregar aristas hasta completar 25
     intentos = 0
     while len(aristas) < 25 and intentos < 1000:
         nodo1 = random.choice(nodos)

@@ -10,17 +10,17 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFo
 #app{display:grid;grid-template-columns:1fr 300px;height:100vh}
 canvas{display:block;width:100%;height:100%;cursor:crosshair}
 #sidebar{background:#161b22;border-left:1px solid #30363d;display:flex;flex-direction:column;overflow-y:auto}
-.topbar{padding:10px 14px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
-.back-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:11px;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.topbar{padding:10px 14px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px;background:#161b22;position:sticky;top:0;z-index:5}
+.back-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:12px;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
 .back-btn:hover{background:#30363d;color:#e6edf3}
-.top-title{font-size:12px;font-weight:500;color:#8b949e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-title{font-size:12px;color:#8b949e;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .section{padding:10px 14px;border-bottom:1px solid #21262d}
 .sec-title{font-size:10px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .metric{background:#0d1117;border-radius:6px;padding:8px 10px;border:1px solid #21262d}
 .ml{font-size:10px;color:#8b949e;margin-bottom:2px}
 .mv{font-size:15px;font-weight:600}
-.g{color:#3fb950}.r{color:#f85149}.a{color:#e3b341}.b{color:#58a6ff}
+.g{color:#3fb950}.a{color:#e3b341}.b{color:#58a6ff}
 .status{padding:7px 12px;border-radius:6px;font-size:11px;font-weight:500;text-align:center;margin-bottom:6px}
 .s-ok{background:#0f2d1a;color:#3fb950;border:1px solid #1a4a2a}
 .s-warn{background:#2d1f0a;color:#e3b341;border:1px solid #4a3510}
@@ -38,7 +38,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 .btn.warn{border-color:#9e6a03;color:#e3b341;background:#2d1f0a}
 .btn.warn:hover{background:#9e6a03;color:#fff}
 .btn.active{background:#238636;border-color:#3fb950;color:#fff}
-.btn:disabled{opacity:.4;cursor:not-allowed}
 .legend{display:flex;flex-direction:column;gap:5px}
 .li{display:flex;align-items:center;gap:8px;font-size:11px;color:#8b949e}
 .ld{width:11px;height:11px;border-radius:50%;flex-shrink:0}
@@ -51,8 +50,10 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 #algo-toggle{display:flex;border-radius:6px;overflow:hidden;border:1px solid #30363d}
 .algo-btn{flex:1;padding:6px;font-size:10px;cursor:pointer;border:none;background:#21262d;color:#8b949e;font-family:inherit;transition:all .15s}
 .algo-btn.active{background:#1f6feb;color:#fff}
-#tooltip{position:absolute;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;display:none;z-index:10;color:#e6edf3;line-height:1.5}
-.node-info{background:#0d1f3c;border:1px solid #1f6feb;border-radius:6px;padding:8px;font-size:11px;color:#58a6ff;margin-top:6px;display:none}
+#tooltip{position:absolute;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;display:none;z-index:10;color:#e6edf3;line-height:1.5;max-width:200px}
+.node-info{border-radius:6px;padding:8px;font-size:11px;margin-top:6px;display:none;line-height:1.5}
+.node-info.critical{background:#2d0f0f;border:1px solid #da3633;color:#f85149}
+.node-info.normal{background:#0d1f3c;border:1px solid #1f6feb;color:#58a6ff}
 </style>
 </head>
 <body>
@@ -64,19 +65,17 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 <div id="sidebar">
   <div class="topbar">
     <a href="index.html" class="back-btn">&#8592; Inicio</a>
-    <span class="top-title">Simulador Red El&eacute;ctrica &mdash; UCC 2026</span>
+    <span class="top-title">Simulador &mdash; UCC 2026</span>
   </div>
-
   <div class="section">
     <div id="status" class="status s-ok">Red operativa &mdash; MST &oacute;ptimo activo</div>
     <div class="metrics">
-      <div class="metric"><div class="ml">Costo MST</div><div class="mv g" id="m-mst">$427M</div></div>
-      <div class="metric"><div class="ml">Red completa</div><div class="mv b" id="m-total">$1,255M</div></div>
-      <div class="metric"><div class="ml">Ahorro</div><div class="mv a" id="m-save">$828M</div></div>
+      <div class="metric"><div class="ml">Costo MST</div><div class="mv g" id="m-mst">$431M</div></div>
+      <div class="metric"><div class="ml">Red completa</div><div class="mv b" id="m-total">$1,224M</div></div>
+      <div class="metric"><div class="ml">Ahorro</div><div class="mv a" id="m-save">$793M</div></div>
       <div class="metric"><div class="ml">Nodos activos</div><div class="mv" id="m-nodes">15/15</div></div>
     </div>
   </div>
-
   <div class="section">
     <div class="sec-title">Algoritmo MST</div>
     <div id="algo-toggle">
@@ -84,7 +83,6 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
       <button class="algo-btn" onclick="setAlgo('prim')">Prim</button>
     </div>
   </div>
-
   <div class="section">
     <div class="sec-title">Controles</div>
     <div class="btn-grid">
@@ -92,23 +90,21 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
       <button class="btn warn" onclick="undoLast()">&#8617; Deshacer &uacute;ltimo</button>
       <button class="btn primary" onclick="randomFail()">&#9889; Fallo aleatorio</button>
       <button class="btn" onclick="toggleMSTOnly()" id="btn-mst-only">&#128065; Solo MST</button>
-      <button class="btn" onclick="stepMode()" id="btn-step">&#9654; Paso a paso</button>
-      <button class="btn full" id="btn-restore" style="display:none" onclick="restoreLast()">&#8617; Restaurar &uacute;ltima l&iacute;nea</button>
-      <button class="btn danger full" id="btn-fail-node" style="display:none" onclick="failSelectedNode()">&#9888; Simular fallo del nodo seleccionado</button>
-      <button class="btn danger full" id="btn-remove-node" style="display:none" onclick="removeSelectedNode()">&#10005; Eliminar nodo seleccionado</button>
+      <button class="btn full" onclick="stepMode()" id="btn-step">&#9654; Modo paso a paso</button>
+      <button class="btn warn full" id="btn-restore" style="display:none" onclick="restoreLast()">&#8617; Restaurar &uacute;ltima l&iacute;nea</button>
+      <button class="btn danger full" id="btn-fail-node" style="display:none" onclick="failSelectedNode()">&#9888; Simular fallo del nodo</button>
+      <button class="btn full" id="btn-undo-node" style="display:none" onclick="undoLast()">&#8617; Restaurar nodo</button>
     </div>
     <div class="node-info" id="node-info"></div>
   </div>
-
   <div class="section">
     <div class="sec-title">Informaci&oacute;n</div>
-    <div id="info"><b>C&oacute;mo usar:</b><br>&bull; Clic en una <b>l&iacute;nea</b> &rarr; simula su fallo<br>&bull; Clic en un <b>nodo</b> &rarr; lo selecciona<br>&bull; Hover &rarr; ver detalle del elemento</div>
+    <div id="info"><b>C&oacute;mo usar:</b><br>&bull; Clic en una <b>l&iacute;nea</b> &rarr; simula su fallo<br>&bull; Clic en un <b>nodo</b> &rarr; selecciona y simula fallo<br>&bull; Hover &rarr; ver detalle</div>
   </div>
-
   <div class="section">
     <div class="sec-title">Leyenda</div>
     <div class="legend">
-      <div class="li"><div class="ld" style="background:#2563eb"></div>Subestaci&oacute;n normal</div>
+      <div class="li"><div class="ld" style="background:#1f6feb"></div>Subestaci&oacute;n normal</div>
       <div class="li"><div class="ld" style="background:#da3633"></div>Subestaci&oacute;n cr&iacute;tica</div>
       <div class="li"><div class="ld" style="background:#8957e5"></div>Nodo seleccionado</div>
       <div class="li"><div class="ll" style="background:#3fb950;height:3px"></div>MST &mdash; red &oacute;ptima</div>
@@ -117,10 +113,9 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
       <div class="li"><div class="ll" style="background:#e3b341;height:3px"></div>Ruta alternativa</div>
     </div>
   </div>
-
   <div class="section">
     <div class="sec-title">Log del sistema</div>
-    <div id="log-box"><p class="linfo">> Sistema iniciado correctamente</p></div>
+    <div id="log-box"><p class="linfo">> Sistema iniciado</p></div>
   </div>
 </div>
 </div>
@@ -128,18 +123,26 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
 const tooltip=document.getElementById('tooltip');
-const ND=[{id:0,name:'S1'},{id:1,name:'S2'},{id:2,name:'S3'},{id:3,name:'S4'},{id:4,name:'S5'},{id:5,name:'S6'},{id:6,name:'S7'},{id:7,name:'S8'},{id:8,name:'S9'},{id:9,name:'S10'},{id:10,name:'S11'},{id:11,name:'S12'},{id:12,name:'S13'},{id:13,name:'S14'},{id:14,name:'S15'}];
+
+// Datos exactos de grafo.py con seed=42 y mínimo 2 conexiones por nodo
+const ND=[
+  {id:0,name:'S1'},{id:1,name:'S2'},{id:2,name:'S3'},{id:3,name:'S4'},
+  {id:4,name:'S5'},{id:5,name:'S6'},{id:6,name:'S7'},{id:7,name:'S8'},
+  {id:8,name:'S9'},{id:9,name:'S10'},{id:10,name:'S11'},{id:11,name:'S12'},
+  {id:12,name:'S13'},{id:13,name:'S14'},{id:14,name:'S15'}
+];
 const ED=[
   {id:0,a:0,b:1,w:13},{id:1,a:0,b:3,w:27},{id:2,a:0,b:4,w:96},
   {id:3,a:0,b:7,w:13},{id:4,a:1,b:2,w:41},{id:5,a:1,b:8,w:37},
-  {id:6,a:1,b:6,w:55},{id:7,a:1,b:14,w:58},{id:8,a:2,b:11,w:64},
+  {id:6,a:1,b:6,w:55},{id:7,a:1,b:14,w:58},{id:8,a:2,b:9,w:85},
   {id:9,a:2,b:3,w:53},{id:10,a:3,b:9,w:74},{id:11,a:4,b:5,w:21},
-  {id:12,a:4,b:6,w:64},{id:13,a:4,b:12,w:15},{id:14,a:4,b:13,w:90},
-  {id:15,a:5,b:13,w:87},{id:16,a:6,b:14,w:38},{id:17,a:7,b:9,w:45},
-  {id:18,a:7,b:11,w:78},{id:19,a:8,b:11,w:35},{id:20,a:9,b:10,w:13},
-  {id:21,a:9,b:14,w:56},{id:22,a:11,b:12,w:93},{id:23,a:11,b:13,w:79},
+  {id:12,a:4,b:6,w:64},{id:13,a:4,b:12,w:15},{id:14,a:5,b:6,w:10},
+  {id:15,a:5,b:12,w:45},{id:16,a:5,b:13,w:87},{id:17,a:6,b:14,w:38},
+  {id:18,a:7,b:14,w:30},{id:19,a:7,b:11,w:78},{id:20,a:8,b:11,w:35},
+  {id:21,a:9,b:10,w:13},{id:22,a:10,b:13,w:64},{id:23,a:11,b:12,w:93},
   {id:24,a:6,b:14,w:38}
 ];
+
 let nodes=[],edges=[],removedEdges=new Set(),removedNodes=new Set();
 let mstEdges=[],criticalNodes=new Set(),altPath=[],history=[];
 let selectedNode=null,algo='kruskal',mstOnly=false,stepping=false;
@@ -147,9 +150,11 @@ let stepIdx=0,stepEdges=[],hoveredEdge=null,hoveredNode=null;
 
 function initPos(){
   const W=cv.width,H=cv.height;
-  const pos=[[.50,.44],[.68,.24],[.83,.47],[.68,.70],[.44,.11],
-             [.27,.09],[.11,.24],[.09,.47],[.17,.71],[.34,.85],
-             [.54,.88],[.75,.85],[.88,.68],[.92,.39],[.85,.17]];
+  const pos=[
+    [.50,.44],[.68,.24],[.83,.47],[.68,.70],[.44,.11],
+    [.27,.09],[.11,.24],[.09,.47],[.17,.71],[.34,.85],
+    [.54,.88],[.75,.85],[.88,.68],[.92,.39],[.85,.17]
+  ];
   nodes=ND.map((n,i)=>({...n,x:pos[i][0]*W,y:pos[i][1]*H}));
   edges=ED.map(e=>({...e}));
 }
@@ -157,16 +162,20 @@ function initPos(){
 function uf(n){
   const p=Array.from({length:n},(_,i)=>i),r=new Array(n).fill(0);
   function find(x){if(p[x]!==x)p[x]=find(p[x]);return p[x]}
-  function union(x,y){const px=find(x),py=find(y);if(px===py)return false;
-    if(r[px]<r[py])p[px]=py;else if(r[px]>r[py])p[py]=px;else{p[py]=px;r[px]++}return true}
+  function union(x,y){
+    const px=find(x),py=find(y);if(px===py)return false;
+    if(r[px]<r[py])p[px]=py;else if(r[px]>r[py])p[py]=px;
+    else{p[py]=px;r[px]++}return true}
   return{find,union}
 }
 
 function kruskal(ae,an){
   const arr=[...an],nm={};arr.forEach((n,i)=>nm[n]=i);
   const u=uf(arr.length),s=[...ae].sort((a,b)=>a.w-b.w),mst=[];let cost=0;
-  for(const e of s){if(!(e.a in nm)||!(e.b in nm))continue;
-    if(u.union(nm[e.a],nm[e.b])){mst.push(e);cost+=e.w;if(mst.length===arr.length-1)break}}
+  for(const e of s){
+    if(!(e.a in nm)||!(e.b in nm))continue;
+    if(u.union(nm[e.a],nm[e.b])){mst.push(e);cost+=e.w;if(mst.length===arr.length-1)break}
+  }
   return{mst,cost}
 }
 
@@ -181,7 +190,8 @@ function prim(ae,an){
       const nb=e.a===v?e.b:e.a;
       if(!visited.has(nb)&&(!best||e.w<best.w))best=e}
     if(!best)break;mst.push(best);cost+=best.w;
-    visited.add(visited.has(best.a)?best.b:best.a)}
+    visited.add(visited.has(best.a)?best.b:best.a);
+  }
   return{mst,cost}
 }
 
@@ -189,36 +199,43 @@ function bfs(from,to,ae,an){
   const adj={};an.forEach(n=>{adj[n]=[]});
   ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e.b);adj[e.b].push(e.a)}});
   const q=[[from]],v=new Set([from]);
-  while(q.length){const path=q.shift(),node=path[path.length-1];
+  while(q.length){
+    const path=q.shift(),node=path[path.length-1];
     if(node===to)return path;
-    for(const nb of(adj[node]||[]))if(!v.has(nb)){v.add(nb);q.push([...path,nb])}}
-  return null
+    for(const nb of(adj[node]||[]))if(!v.has(nb)){v.add(nb);q.push([...path,nb])}
+  }
+  return null;
 }
 
 function artics(ae,an){
   const adj={};an.forEach(n=>{adj[n]=[]});
   ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e.b);adj[e.b].push(e.a)}});
   const disc={},low={},par={},vis={},arts=new Set();let t=0;
-  function dfs(u){vis[u]=true;disc[u]=low[u]=t++;let ch=0;
+  function dfs(u){
+    vis[u]=true;disc[u]=low[u]=t++;let ch=0;
     for(const v of(adj[u]||[])){
       if(!vis[v]){ch++;par[v]=u;dfs(v);low[u]=Math.min(low[u],low[v]);
         if(par[u]===undefined&&ch>1)arts.add(u);
         if(par[u]!==undefined&&low[v]>=disc[u])arts.add(u);
-      }else if(v!==par[u])low[u]=Math.min(low[u],disc[v])}}
+      }else if(v!==par[u])low[u]=Math.min(low[u],disc[v]);
+    }
+  }
   for(const n of an)if(!vis[n]){par[n]=undefined;dfs(n)}
-  return arts
+  return arts;
 }
 
 function getActive(){
-  const an=new Set();nodes.forEach(n=>{if(!removedNodes.has(n.id))an.add(n.id)});
+  const an=new Set();
+  nodes.forEach(n=>{if(!removedNodes.has(n.id))an.add(n.id)});
   const ae=edges.filter(e=>!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b));
-  return{an,ae}
+  return{an,ae};
 }
 
 function recalc(){
   const{an,ae}=getActive();
   const res=algo==='kruskal'?kruskal(ae,an):prim(ae,an);
-  mstEdges=res.mst;criticalNodes=artics(ae,an);
+  mstEdges=res.mst;
+  criticalNodes=artics(ae,an);
   const tc=ae.reduce((s,e)=>s+e.w,0);
   const conn=res.mst.length===an.size-1&&an.size>0;
   document.getElementById('m-mst').textContent='$'+res.cost+'M';
@@ -233,7 +250,7 @@ function recalc(){
   }else{
     sb.className='status s-err';sb.textContent='Red desconectada \u2014 Nodos aislados';
   }
-  return{an,ae,conn}
+  return{an,ae,conn};
 }
 
 function log(msg,type='linfo'){
@@ -243,22 +260,23 @@ function log(msg,type='linfo'){
 }
 function setInfo(html){document.getElementById('info').innerHTML=html}
 
-function updateNodeButtons(){
+function updateNodeUI(){
   const btnFail=document.getElementById('btn-fail-node');
-  const btnRemove=document.getElementById('btn-remove-node');
+  const btnUndo=document.getElementById('btn-undo-node');
   const nodeInfo=document.getElementById('node-info');
+  const hasRemoved=removedNodes.size>0;
+  btnUndo.style.display=hasRemoved?'block':'none';
   if(selectedNode!==null){
     const n=nodes[selectedNode];
     const isCrit=criticalNodes.has(n.id);
     btnFail.style.display='block';
-    btnRemove.style.display='block';
     nodeInfo.style.display='block';
+    nodeInfo.className='node-info '+(isCrit?'critical':'normal');
     nodeInfo.innerHTML=isCrit?
-      '<span style="color:#f85149">&#9888; '+n.name+' es subestaci&oacute;n cr&iacute;tica.<br>Su fallo desconectar&aacute; la red.</span>':
-      '<span style="color:#58a6ff">'+n.name+' seleccionada. Subestaci&oacute;n normal.</span>';
+      '&#9888; '+n.name+' es cr&iacute;tica.<br>Su fallo puede desconectar la red.':
+      n.name+' seleccionada. Subestaci\u00f3n normal.';
   }else{
     btnFail.style.display='none';
-    btnRemove.style.display='none';
     nodeInfo.style.display='none';
   }
 }
@@ -271,13 +289,19 @@ function draw(){
   if(altPath.length>1){
     for(let i=0;i<altPath.length-1;i++){
       const a=altPath[i],b=altPath[i+1];
-      edges.forEach(e=>{if(!removedEdges.has(e.id)&&((e.a===a&&e.b===b)||(e.a===b&&e.b===a)))altSet.add(e.id)});
+      edges.forEach(e=>{
+        if(!removedEdges.has(e.id)&&((e.a===a&&e.b===b)||(e.a===b&&e.b===a)))
+          altSet.add(e.id);
+      });
     }
   }
+
+  // Dibujar aristas
   edges.forEach(e=>{
     if(!an.has(e.a)||!an.has(e.b))return;
     if(mstOnly&&!mstSet.has(e.id)&&!removedEdges.has(e.id))return;
-    const na=nodes[e.a],nb=nodes[e.b],isH=hoveredEdge&&hoveredEdge.id===e.id;
+    const na=nodes[e.a],nb=nodes[e.b];
+    const isH=hoveredEdge&&hoveredEdge.id===e.id;
     ctx.beginPath();ctx.moveTo(na.x,na.y);ctx.lineTo(nb.x,nb.y);
     if(removedEdges.has(e.id)){
       ctx.strokeStyle='#da3633';ctx.lineWidth=2;ctx.setLineDash([6,4]);
@@ -294,13 +318,16 @@ function draw(){
     ctx.fillStyle=fc;ctx.font='9px monospace';ctx.textAlign='center';
     ctx.fillText('$'+e.w+'M',mx,my-7);
   });
+
+  // Dibujar nodos
   nodes.forEach(n=>{
     if(removedNodes.has(n.id)){
       ctx.beginPath();ctx.arc(n.x,n.y,16,0,Math.PI*2);
       ctx.fillStyle='#2d0f0f';ctx.fill();
-      ctx.strokeStyle='#da3633';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='#f85149';ctx.font='9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(n.name,n.x,n.y);return;
+      ctx.strokeStyle='#da3633';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#f85149';ctx.font='bold 9px monospace';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.name,n.x,n.y);
+      return;
     }
     const isCrit=criticalNodes.has(n.id),isSel=selectedNode===n.id,isH=hoveredNode===n.id;
     if(isCrit&&!isSel){
@@ -312,7 +339,7 @@ function draw(){
     if(isH&&!isSel)fill=isCrit?'#f85149':'#388bfd';
     ctx.beginPath();ctx.arc(n.x,n.y,16,0,Math.PI*2);
     ctx.fillStyle=fill;ctx.fill();
-    ctx.strokeStyle=isSel?'#d2a8ff':isCrit?'#f85149':'#1f6feb';
+    ctx.strokeStyle=isSel?'#d2a8ff':isCrit?'#f85149':'#388bfd';
     ctx.lineWidth=isSel?2:1.5;ctx.stroke();
     ctx.fillStyle='#fff';ctx.font='bold 9px monospace';
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.name,n.x,n.y);
@@ -332,7 +359,7 @@ function failEdge(e){
     log('Fallo '+na+'\u2013'+nb+' | Ruta: '+route,'lwarn');
     setInfo('<b>Fallo: '+na+'\u2013'+nb+' ($'+e.w+'M)</b><br><b>Ruta alternativa:</b><br><span style="color:#e3b341">'+route+'</span>');
   }else{
-    log('Fallo '+na+'\u2013'+nb+' \u2014 sin ruta alternativa','lerr');
+    log('Fallo '+na+'\u2013'+nb+' \u2014 sin ruta','lerr');
     setInfo('<b>Fallo: '+na+'\u2013'+nb+'</b><br><span style="color:#f85149">Sin ruta alternativa.<br>Secci\u00f3n aislada.</span>');
   }
   draw();
@@ -341,23 +368,35 @@ function failEdge(e){
 function failSelectedNode(){
   if(selectedNode===null)return;
   const n=nodes[selectedNode];
-  removedNodes.add(selectedNode);history.push({type:'node',id:selectedNode});
-  altPath=[];selectedNode=null;
-  updateNodeButtons();
+  // Encontrar vecinos del nodo antes de eliminarlo
+  const{an,ae}=getActive();
+  const vecinos=ae.filter(e=>e.a===n.id||e.b===n.id).map(e=>e.a===n.id?e.b:e.a);
+  // Eliminar todas sus aristas
+  ae.forEach(e=>{
+    if(e.a===n.id||e.b===n.id){
+      removedEdges.add(e.id);
+      history.push({type:'edge',id:e.id});
+    }
+  });
+  removedNodes.add(n.id);history.push({type:'node',id:n.id});
+  // Buscar ruta alternativa entre sus vecinos si hay más de uno
+  if(vecinos.length>=2){
+    const{an:an2,ae:ae2}=getActive();
+    const path=bfs(vecinos[0],vecinos[1],ae2,an2);
+    altPath=path||[];
+  }else{
+    altPath=[];
+  }
+  selectedNode=null;
   const{conn}=recalc();
-  log('Fallo en nodo '+n.name+(conn?'':' \u2014 red desconectada'),'lerr');
-  setInfo('<b>Fallo: nodo '+n.name+'</b><br>'+(conn?'Red redirigida correctamente.':'<span style="color:#f85149">Red desconectada.<br>Nodos aislados detectados.</span>'));
-  draw();
-}
-
-function removeSelectedNode(){
-  if(selectedNode===null)return;
-  const n=nodes[selectedNode];
-  removedNodes.add(selectedNode);history.push({type:'node',id:selectedNode});
-  altPath=[];selectedNode=null;
-  updateNodeButtons();
-  recalc();
-  log('Nodo '+n.name+' eliminado','lwarn');
+  updateNodeUI();
+  log('Fallo en nodo '+n.name+(conn?' \u2014 red redirigida':' \u2014 red desconectada'),'lerr');
+  if(altPath.length>1){
+    const route=altPath.map(i=>nodes[i].name).join(' \u2192 ');
+    setInfo('<b>Fallo: nodo '+n.name+'</b><br><b>Ruta alternativa:</b><br><span style="color:#e3b341">'+route+'</span>');
+  }else{
+    setInfo('<b>Fallo: nodo '+n.name+'</b><br>'+(conn?'Red redirigida.':'<span style="color:#f85149">Sin ruta alternativa.</span>'));
+  }
   draw();
 }
 
@@ -367,9 +406,9 @@ function resetAll(){
   document.getElementById('btn-restore').style.display='none';
   document.getElementById('btn-mst-only').classList.remove('active');
   document.getElementById('btn-step').classList.remove('active');
-  updateNodeButtons();recalc();
-  log('Red reiniciada completamente','lok');
-  setInfo('<b>Red reiniciada.</b><br>MST \u00f3ptimo activo: $427M');
+  updateNodeUI();recalc();
+  log('Red reiniciada','lok');
+  setInfo('<b>Red reiniciada.</b><br>MST \u00f3ptimo activo: $431M');
   draw();
 }
 
@@ -379,7 +418,7 @@ function undoLast(){
   if(last.type==='edge'){removedEdges.delete(last.id);altPath=[];}
   else{removedNodes.delete(last.id);}
   if(!removedEdges.size)document.getElementById('btn-restore').style.display='none';
-  recalc();log('Acci\u00f3n deshecha','lok');draw();
+  recalc();updateNodeUI();log('Acci\u00f3n deshecha','lok');draw();
 }
 
 function restoreLast(){
@@ -401,7 +440,7 @@ function randomFail(){
 function toggleMSTOnly(){
   mstOnly=!mstOnly;
   document.getElementById('btn-mst-only').classList.toggle('active',mstOnly);
-  log(mstOnly?'Mostrando solo MST':'Red completa visible','linfo');draw();
+  log(mstOnly?'Solo MST':'Red completa','linfo');draw();
 }
 
 function stepMode(){
@@ -410,15 +449,15 @@ function stepMode(){
   if(stepping){
     const{an,ae}=getActive();
     stepEdges=[...ae].sort((a,b)=>a.w-b.w);stepIdx=0;mstEdges=[];
-    log('Paso a paso activado \u2014 clic en canvas para avanzar','linfo');
-    setInfo('<b>Modo paso a paso</b><br>Haz clic en el canvas para ver c\u00f3mo Kruskal agrega cada arista.');
+    log('Paso a paso \u2014 clic en canvas para avanzar','linfo');
+    setInfo('<b>Modo paso a paso</b><br>Haz clic en el canvas para ver c\u00f3mo Kruskal construye el MST.');
   }else{recalc();draw();}
 }
 
 function setAlgo(a){
   algo=a;
   document.querySelectorAll('.algo-btn').forEach((b,i)=>b.classList.toggle('active',i===(a==='kruskal'?0:1)));
-  recalc();log('Algoritmo cambiado a '+a.toUpperCase(),'linfo');draw();
+  recalc();log('Algoritmo: '+a.toUpperCase(),'linfo');draw();
 }
 
 function nodeHit(n,mx,my){return Math.sqrt((mx-n.x)**2+(my-n.y)**2)<18}
@@ -453,7 +492,7 @@ cv.addEventListener('mousemove',ev=>{
     const mstSet=new Set(mstEdges.map(x=>x.id));
     tooltip.style.display='block';
     tooltip.style.left=(ev.offsetX+14)+'px';tooltip.style.top=(ev.offsetY-12)+'px';
-    tooltip.innerHTML='<b>'+nodes[e.a].name+' \u2013 '+nodes[e.b].name+'</b><br>Costo: $'+e.w+'M<br>'+(mstSet.has(e.id)?'<span style="color:#3fb950">Parte del MST</span>':'No forma parte del MST')+'<br><span style="color:#8b949e">Clic para simular fallo</span>';
+    tooltip.innerHTML='<b>'+nodes[e.a].name+' \u2013 '+nodes[e.b].name+'</b><br>Costo: $'+e.w+'M<br>'+(mstSet.has(e.id)?'<span style="color:#3fb950">Parte del MST</span>':'No MST')+'<br><span style="color:#8b949e">Clic para simular fallo</span>';
     cv.style.cursor='pointer';
   }else{
     tooltip.style.display='none';cv.style.cursor='crosshair';
@@ -479,11 +518,11 @@ cv.addEventListener('click',ev=>{
     const na=nodes[e.a].name,nb=nodes[e.b].name;
     if(ok){
       mstEdges.push(e);
-      log('+ '+na+'\u2013'+nb+' $'+e.w+'M agregada al MST','lok');
-      setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#3fb950">\u2713 '+na+'\u2013'+nb+' ($'+e.w+'M) AGREGADA</span><br>No forma ciclo. Conecta dos zonas distintas.');
+      log('+ '+na+'\u2013'+nb+' $'+e.w+'M agregada','lok');
+      setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#3fb950">\u2713 '+na+'\u2013'+nb+' ($'+e.w+'M) AGREGADA</span><br>No forma ciclo.');
     }else{
-      log('\u2717 '+na+'\u2013'+nb+' $'+e.w+'M rechazada (ciclo)','lwarn');
-      setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#f85149">\u2717 '+na+'\u2013'+nb+' ($'+e.w+'M) RECHAZADA</span><br>Ya existe camino entre estos nodos. Crear\u00eda un ciclo.');
+      log('\u2717 '+na+'\u2013'+nb+' rechazada (ciclo)','lwarn');
+      setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#f85149">\u2717 '+na+'\u2013'+nb+' RECHAZADA</span><br>Crear\u00eda un ciclo.');
     }
     stepIdx++;draw();return;
   }
@@ -492,10 +531,10 @@ cv.addEventListener('click',ev=>{
   for(const n of nodes){
     if(!removedNodes.has(n.id)&&nodeHit(n,mx,my)){
       selectedNode=selectedNode===n.id?null:n.id;
-      updateNodeButtons();
+      updateNodeUI();
       if(selectedNode!==null){
         const isCrit=criticalNodes.has(n.id);
-        setInfo('<b>'+n.name+' seleccionada</b><br>'+(isCrit?'<span style="color:#f85149">&#9888; Subestaci\u00f3n cr\u00edtica.<br>Su fallo desconectar\u00e1 la red.</span>':'Subestaci\u00f3n normal.<br>Usa los botones para simular su fallo.'));
+        setInfo('<b>'+n.name+' seleccionada</b><br>'+(isCrit?'<span style="color:#f85149">&#9888; Subestaci\u00f3n cr\u00edtica.</span>':'Subestaci\u00f3n normal.<br>Usa el bot\u00f3n para simular fallo.'));
         log('Nodo '+n.name+' seleccionado'+(criticalNodes.has(n.id)?' [CR\u00cdTICO]':''),'linfo');
       }else{
         setInfo('<b>Selecci\u00f3n cancelada</b>');
@@ -503,7 +542,7 @@ cv.addEventListener('click',ev=>{
       draw();return;
     }
   }
-  selectedNode=null;updateNodeButtons();
+  selectedNode=null;updateNodeUI();
   for(const e of edges){
     if(!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b)&&edgeHit(e,mx,my)){
       failEdge(e);return;
@@ -519,8 +558,8 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 resize();
-log('MST calculado con Kruskal + Union-Find','lok');
-log('Nodo cr\u00edtico detectado: S10 (S11 sin respaldo)','lwarn');
+log('MST calculado: $431M (Kruskal + Union-Find)','lok');
+log('Sin subestaciones cr\u00edticas \u2014 red con respaldo completo','lok');
 </script>
 </body>
 </html>
