@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;height:100vh;overflow:hidden}
 #app{display:grid;grid-template-columns:1fr 300px;height:100vh}
-canvas{display:block;width:100%;height:100%;cursor:crosshair}
+canvas{display:block;width:100%;height:100%}
 #sidebar{background:#161b22;border-left:1px solid #30363d;display:flex;flex-direction:column;overflow-y:auto}
 .topbar{padding:10px 14px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px;background:#161b22;position:sticky;top:0;z-index:5}
 .back-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:12px;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
@@ -54,6 +54,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
 .node-info{border-radius:6px;padding:8px;font-size:11px;margin-top:6px;display:none;line-height:1.5}
 .node-info.critical{background:#2d0f0f;border:1px solid #da3633;color:#f85149}
 .node-info.normal{background:#0d1f3c;border:1px solid #1f6feb;color:#58a6ff}
+.node-info.removed{background:#1c1003;border:1px solid #9e6a03;color:#e3b341}
 </style>
 </head>
 <body>
@@ -93,13 +94,13 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
       <button class="btn full" onclick="stepMode()" id="btn-step">&#9654; Modo paso a paso</button>
       <button class="btn warn full" id="btn-restore" style="display:none" onclick="restoreLast()">&#8617; Restaurar &uacute;ltima l&iacute;nea</button>
       <button class="btn danger full" id="btn-fail-node" style="display:none" onclick="failSelectedNode()">&#9888; Simular fallo del nodo</button>
-      <button class="btn full" id="btn-undo-node" style="display:none" onclick="undoLast()">&#8617; Restaurar nodo</button>
+      <button class="btn success full" id="btn-restore-node" style="display:none" onclick="restoreSelectedNode()">&#9654; Restaurar nodo y conexiones</button>
     </div>
     <div class="node-info" id="node-info"></div>
   </div>
   <div class="section">
     <div class="sec-title">Informaci&oacute;n</div>
-    <div id="info"><b>C&oacute;mo usar:</b><br>&bull; Clic en una <b>l&iacute;nea</b> &rarr; simula su fallo<br>&bull; Clic en un <b>nodo</b> &rarr; selecciona y simula fallo<br>&bull; Hover &rarr; ver detalle</div>
+    <div id="info"><b>C&oacute;mo usar:</b><br>&bull; Clic en <b>l&iacute;nea</b> &rarr; simula fallo<br>&bull; Clic en <b>nodo activo</b> &rarr; selecciona y simula fallo<br>&bull; Clic en <b>nodo eliminado</b> &rarr; restaurar<br>&bull; <b>Arrastrar</b> nodo &rarr; mover posici&oacute;n</div>
   </div>
   <div class="section">
     <div class="sec-title">Leyenda</div>
@@ -107,6 +108,7 @@ canvas{display:block;width:100%;height:100%;cursor:crosshair}
       <div class="li"><div class="ld" style="background:#1f6feb"></div>Subestaci&oacute;n normal</div>
       <div class="li"><div class="ld" style="background:#da3633"></div>Subestaci&oacute;n cr&iacute;tica</div>
       <div class="li"><div class="ld" style="background:#8957e5"></div>Nodo seleccionado</div>
+      <div class="li"><div class="ld" style="background:#9e6a03;opacity:.7"></div>Nodo eliminado (clic para restaurar)</div>
       <div class="li"><div class="ll" style="background:#3fb950;height:3px"></div>MST &mdash; red &oacute;ptima</div>
       <div class="li"><div class="ll" style="background:#30363d;height:1px"></div>Conexi&oacute;n no MST</div>
       <div class="li"><div class="ll" style="background:#da3633;height:2px"></div>L&iacute;nea fallida</div>
@@ -124,7 +126,6 @@ const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
 const tooltip=document.getElementById('tooltip');
 
-// Datos exactos de grafo.py con seed=42 y mínimo 2 conexiones por nodo
 const ND=[
   {id:0,name:'S1'},{id:1,name:'S2'},{id:2,name:'S3'},{id:3,name:'S4'},
   {id:4,name:'S5'},{id:5,name:'S6'},{id:6,name:'S7'},{id:7,name:'S8'},
@@ -147,6 +148,16 @@ let nodes=[],edges=[],removedEdges=new Set(),removedNodes=new Set();
 let mstEdges=[],criticalNodes=new Set(),altPath=[],history=[];
 let selectedNode=null,algo='kruskal',mstOnly=false,stepping=false;
 let stepIdx=0,stepEdges=[],hoveredEdge=null,hoveredNode=null;
+let dragging=null,dragOffX=0,dragOffY=0,dragMoved=false;
+
+// Guardar aristas originales de cada nodo para restaurar
+const nodeEdges={};
+ED.forEach(e=>{
+  if(!nodeEdges[e.a])nodeEdges[e.a]=[];
+  if(!nodeEdges[e.b])nodeEdges[e.b]=[];
+  nodeEdges[e.a].push(e.id);
+  nodeEdges[e.b].push(e.id);
+});
 
 function initPos(){
   const W=cv.width,H=cv.height;
@@ -155,15 +166,18 @@ function initPos(){
     [.27,.09],[.11,.24],[.09,.47],[.17,.71],[.34,.85],
     [.54,.88],[.75,.85],[.88,.68],[.92,.39],[.85,.17]
   ];
-  nodes=ND.map((n,i)=>({...n,x:pos[i][0]*W,y:pos[i][1]*H}));
+  nodes=ND.map((n,i)=>({
+    ...n,
+    x:nodes[i]?nodes[i].x:pos[i][0]*W,
+    y:nodes[i]?nodes[i].y:pos[i][1]*H
+  }));
   edges=ED.map(e=>({...e}));
 }
 
 function uf(n){
   const p=Array.from({length:n},(_,i)=>i),r=new Array(n).fill(0);
   function find(x){if(p[x]!==x)p[x]=find(p[x]);return p[x]}
-  function union(x,y){
-    const px=find(x),py=find(y);if(px===py)return false;
+  function union(x,y){const px=find(x),py=find(y);if(px===py)return false;
     if(r[px]<r[py])p[px]=py;else if(r[px]>r[py])p[py]=px;
     else{p[py]=px;r[px]++}return true}
   return{find,union}
@@ -172,10 +186,8 @@ function uf(n){
 function kruskal(ae,an){
   const arr=[...an],nm={};arr.forEach((n,i)=>nm[n]=i);
   const u=uf(arr.length),s=[...ae].sort((a,b)=>a.w-b.w),mst=[];let cost=0;
-  for(const e of s){
-    if(!(e.a in nm)||!(e.b in nm))continue;
-    if(u.union(nm[e.a],nm[e.b])){mst.push(e);cost+=e.w;if(mst.length===arr.length-1)break}
-  }
+  for(const e of s){if(!(e.a in nm)||!(e.b in nm))continue;
+    if(u.union(nm[e.a],nm[e.b])){mst.push(e);cost+=e.w;if(mst.length===arr.length-1)break}}
   return{mst,cost}
 }
 
@@ -190,8 +202,7 @@ function prim(ae,an){
       const nb=e.a===v?e.b:e.a;
       if(!visited.has(nb)&&(!best||e.w<best.w))best=e}
     if(!best)break;mst.push(best);cost+=best.w;
-    visited.add(visited.has(best.a)?best.b:best.a);
-  }
+    visited.add(visited.has(best.a)?best.b:best.a)}
   return{mst,cost}
 }
 
@@ -199,43 +210,36 @@ function bfs(from,to,ae,an){
   const adj={};an.forEach(n=>{adj[n]=[]});
   ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e.b);adj[e.b].push(e.a)}});
   const q=[[from]],v=new Set([from]);
-  while(q.length){
-    const path=q.shift(),node=path[path.length-1];
+  while(q.length){const path=q.shift(),node=path[path.length-1];
     if(node===to)return path;
-    for(const nb of(adj[node]||[]))if(!v.has(nb)){v.add(nb);q.push([...path,nb])}
-  }
-  return null;
+    for(const nb of(adj[node]||[]))if(!v.has(nb)){v.add(nb);q.push([...path,nb])}}
+  return null
 }
 
 function artics(ae,an){
   const adj={};an.forEach(n=>{adj[n]=[]});
   ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e.b);adj[e.b].push(e.a)}});
   const disc={},low={},par={},vis={},arts=new Set();let t=0;
-  function dfs(u){
-    vis[u]=true;disc[u]=low[u]=t++;let ch=0;
+  function dfs(u){vis[u]=true;disc[u]=low[u]=t++;let ch=0;
     for(const v of(adj[u]||[])){
       if(!vis[v]){ch++;par[v]=u;dfs(v);low[u]=Math.min(low[u],low[v]);
         if(par[u]===undefined&&ch>1)arts.add(u);
         if(par[u]!==undefined&&low[v]>=disc[u])arts.add(u);
-      }else if(v!==par[u])low[u]=Math.min(low[u],disc[v]);
-    }
-  }
+      }else if(v!==par[u])low[u]=Math.min(low[u],disc[v])}}
   for(const n of an)if(!vis[n]){par[n]=undefined;dfs(n)}
-  return arts;
+  return arts
 }
 
 function getActive(){
-  const an=new Set();
-  nodes.forEach(n=>{if(!removedNodes.has(n.id))an.add(n.id)});
+  const an=new Set();nodes.forEach(n=>{if(!removedNodes.has(n.id))an.add(n.id)});
   const ae=edges.filter(e=>!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b));
-  return{an,ae};
+  return{an,ae}
 }
 
 function recalc(){
   const{an,ae}=getActive();
   const res=algo==='kruskal'?kruskal(ae,an):prim(ae,an);
-  mstEdges=res.mst;
-  criticalNodes=artics(ae,an);
+  mstEdges=res.mst;criticalNodes=artics(ae,an);
   const tc=ae.reduce((s,e)=>s+e.w,0);
   const conn=res.mst.length===an.size-1&&an.size>0;
   document.getElementById('m-mst').textContent='$'+res.cost+'M';
@@ -250,7 +254,7 @@ function recalc(){
   }else{
     sb.className='status s-err';sb.textContent='Red desconectada \u2014 Nodos aislados';
   }
-  return{an,ae,conn};
+  return{an,ae,conn}
 }
 
 function log(msg,type='linfo'){
@@ -262,21 +266,29 @@ function setInfo(html){document.getElementById('info').innerHTML=html}
 
 function updateNodeUI(){
   const btnFail=document.getElementById('btn-fail-node');
-  const btnUndo=document.getElementById('btn-undo-node');
+  const btnRestore=document.getElementById('btn-restore-node');
   const nodeInfo=document.getElementById('node-info');
-  const hasRemoved=removedNodes.size>0;
-  btnUndo.style.display=hasRemoved?'block':'none';
   if(selectedNode!==null){
     const n=nodes[selectedNode];
+    const isRemoved=removedNodes.has(n.id);
     const isCrit=criticalNodes.has(n.id);
-    btnFail.style.display='block';
     nodeInfo.style.display='block';
-    nodeInfo.className='node-info '+(isCrit?'critical':'normal');
-    nodeInfo.innerHTML=isCrit?
-      '&#9888; '+n.name+' es cr&iacute;tica.<br>Su fallo puede desconectar la red.':
-      n.name+' seleccionada. Subestaci\u00f3n normal.';
+    if(isRemoved){
+      btnFail.style.display='none';
+      btnRestore.style.display='block';
+      nodeInfo.className='node-info removed';
+      nodeInfo.innerHTML='&#9888; '+n.name+' est\u00e1 eliminada.<br>Presiona restaurar para reconectarla.';
+    }else{
+      btnFail.style.display='block';
+      btnRestore.style.display='none';
+      nodeInfo.className='node-info '+(isCrit?'critical':'normal');
+      nodeInfo.innerHTML=isCrit?
+        '&#9888; '+n.name+' es cr\u00edtica.<br>Su fallo puede desconectar la red.':
+        n.name+' seleccionada. Subestaci\u00f3n normal.';
+    }
   }else{
     btnFail.style.display='none';
+    btnRestore.style.display='none';
     nodeInfo.style.display='none';
   }
 }
@@ -290,18 +302,13 @@ function draw(){
     for(let i=0;i<altPath.length-1;i++){
       const a=altPath[i],b=altPath[i+1];
       edges.forEach(e=>{
-        if(!removedEdges.has(e.id)&&((e.a===a&&e.b===b)||(e.a===b&&e.b===a)))
-          altSet.add(e.id);
-      });
+        if(!removedEdges.has(e.id)&&((e.a===a&&e.b===b)||(e.a===b&&e.b===a)))altSet.add(e.id)});
     }
   }
-
-  // Dibujar aristas
   edges.forEach(e=>{
     if(!an.has(e.a)||!an.has(e.b))return;
     if(mstOnly&&!mstSet.has(e.id)&&!removedEdges.has(e.id))return;
-    const na=nodes[e.a],nb=nodes[e.b];
-    const isH=hoveredEdge&&hoveredEdge.id===e.id;
+    const na=nodes[e.a],nb=nodes[e.b],isH=hoveredEdge&&hoveredEdge.id===e.id;
     ctx.beginPath();ctx.moveTo(na.x,na.y);ctx.lineTo(nb.x,nb.y);
     if(removedEdges.has(e.id)){
       ctx.strokeStyle='#da3633';ctx.lineWidth=2;ctx.setLineDash([6,4]);
@@ -318,18 +325,25 @@ function draw(){
     ctx.fillStyle=fc;ctx.font='9px monospace';ctx.textAlign='center';
     ctx.fillText('$'+e.w+'M',mx,my-7);
   });
-
-  // Dibujar nodos
   nodes.forEach(n=>{
-    if(removedNodes.has(n.id)){
+    const isRemoved=removedNodes.has(n.id);
+    const isCrit=criticalNodes.has(n.id);
+    const isSel=selectedNode===n.id;
+    const isH=hoveredNode===n.id;
+    if(isRemoved){
       ctx.beginPath();ctx.arc(n.x,n.y,16,0,Math.PI*2);
-      ctx.fillStyle='#2d0f0f';ctx.fill();
-      ctx.strokeStyle='#da3633';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle='#f85149';ctx.font='bold 9px monospace';
-      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.name,n.x,n.y);
+      ctx.fillStyle='#2d1f0a';ctx.fill();
+      ctx.strokeStyle=isSel?'#e3b341':'#9e6a03';
+      ctx.lineWidth=isSel?2.5:1.5;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=isSel?'#e3b341':'#9e6a03';
+      ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(n.name,n.x,n.y);
+      if(isH||isSel){
+        ctx.beginPath();ctx.arc(n.x,n.y,22,0,Math.PI*2);
+        ctx.strokeStyle='#e3b341';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.stroke();ctx.setLineDash([]);
+      }
       return;
     }
-    const isCrit=criticalNodes.has(n.id),isSel=selectedNode===n.id,isH=hoveredNode===n.id;
     if(isCrit&&!isSel){
       ctx.beginPath();ctx.arc(n.x,n.y,22,0,Math.PI*2);
       ctx.strokeStyle='#f85149';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
@@ -368,25 +382,27 @@ function failEdge(e){
 function failSelectedNode(){
   if(selectedNode===null)return;
   const n=nodes[selectedNode];
-  // Encontrar vecinos del nodo antes de eliminarlo
-  const{an,ae}=getActive();
-  const vecinos=ae.filter(e=>e.a===n.id||e.b===n.id).map(e=>e.a===n.id?e.b:e.a);
-  // Eliminar todas sus aristas
-  ae.forEach(e=>{
-    if(e.a===n.id||e.b===n.id){
-      removedEdges.add(e.id);
-      history.push({type:'edge',id:e.id});
+  const edgesDelNode=(nodeEdges[n.id]||[]);
+  edgesDelNode.forEach(eid=>{
+    if(!removedEdges.has(eid)){
+      removedEdges.add(eid);
+      history.push({type:'edge',id:eid});
     }
   });
-  removedNodes.add(n.id);history.push({type:'node',id:n.id});
-  // Buscar ruta alternativa entre sus vecinos si hay más de uno
-  if(vecinos.length>=2){
-    const{an:an2,ae:ae2}=getActive();
-    const path=bfs(vecinos[0],vecinos[1],ae2,an2);
-    altPath=path||[];
-  }else{
-    altPath=[];
+  removedNodes.add(n.id);
+  history.push({type:'node',id:n.id});
+  const vecinosIds=edges.filter(e=>edgesDelNode.includes(e.id)).map(e=>e.a===n.id?e.b:e.a);
+  const{an,ae}=getActive();
+  let found=false;
+  for(let i=0;i<vecinosIds.length&&!found;i++){
+    for(let j=i+1;j<vecinosIds.length&&!found;j++){
+      if(an.has(vecinosIds[i])&&an.has(vecinosIds[j])){
+        const path=bfs(vecinosIds[i],vecinosIds[j],ae,an);
+        if(path){altPath=path;found=true;}
+      }
+    }
   }
+  if(!found)altPath=[];
   selectedNode=null;
   const{conn}=recalc();
   updateNodeUI();
@@ -395,8 +411,26 @@ function failSelectedNode(){
     const route=altPath.map(i=>nodes[i].name).join(' \u2192 ');
     setInfo('<b>Fallo: nodo '+n.name+'</b><br><b>Ruta alternativa:</b><br><span style="color:#e3b341">'+route+'</span>');
   }else{
-    setInfo('<b>Fallo: nodo '+n.name+'</b><br>'+(conn?'Red redirigida.':'<span style="color:#f85149">Sin ruta alternativa.</span>'));
+    setInfo('<b>Fallo: nodo '+n.name+'</b><br>'+(conn?'Red redirigida.':'<span style="color:#f85149">Secci\u00f3n aislada.</span>'));
   }
+  draw();
+}
+
+function restoreSelectedNode(){
+  if(selectedNode===null)return;
+  const n=nodes[selectedNode];
+  if(!removedNodes.has(n.id))return;
+  // Restaurar nodo
+  removedNodes.delete(n.id);
+  // Restaurar todas sus aristas originales
+  (nodeEdges[n.id]||[]).forEach(eid=>removedEdges.delete(eid));
+  // Limpiar del historial las entradas de este nodo y sus aristas
+  history=history.filter(h=>!(h.type==='node'&&h.id===n.id)&&!((nodeEdges[n.id]||[]).includes(h.id)&&h.type==='edge'));
+  altPath=[];
+  const{conn}=recalc();
+  updateNodeUI();
+  log('Nodo '+n.name+' restaurado con todas sus conexiones','lok');
+  setInfo('<b>Nodo '+n.name+' restaurado</b><br>'+(conn?'Red reconectada correctamente.':'Verificar conectividad de la red.'));
   draw();
 }
 
@@ -450,7 +484,7 @@ function stepMode(){
     const{an,ae}=getActive();
     stepEdges=[...ae].sort((a,b)=>a.w-b.w);stepIdx=0;mstEdges=[];
     log('Paso a paso \u2014 clic en canvas para avanzar','linfo');
-    setInfo('<b>Modo paso a paso</b><br>Haz clic en el canvas para ver c\u00f3mo Kruskal construye el MST.');
+    setInfo('<b>Modo paso a paso</b><br>Clic en el canvas para ver c\u00f3mo Kruskal construye el MST.');
   }else{recalc();draw();}
 }
 
@@ -458,6 +492,14 @@ function setAlgo(a){
   algo=a;
   document.querySelectorAll('.algo-btn').forEach((b,i)=>b.classList.toggle('active',i===(a==='kruskal'?0:1)));
   recalc();log('Algoritmo: '+a.toUpperCase(),'linfo');draw();
+}
+
+function getMouse(ev){
+  const r=cv.getBoundingClientRect();
+  return{
+    mx:(ev.clientX-r.left)*(cv.width/r.width),
+    my:(ev.clientY-r.top)*(cv.height/r.height)
+  }
 }
 
 function nodeHit(n,mx,my){return Math.sqrt((mx-n.x)**2+(my-n.y)**2)<18}
@@ -470,29 +512,50 @@ function edgeHit(e,mx,my){
   return Math.sqrt((mx-px)**2+(my-py)**2)<9;
 }
 
+// ARRASTRE DE NODOS
+cv.addEventListener('mousedown',ev=>{
+  const{mx,my}=getMouse(ev);
+  for(const n of nodes){
+    if(nodeHit(n,mx,my)){
+      dragging=n;dragOffX=mx-n.x;dragOffY=my-n.y;dragMoved=false;
+      cv.style.cursor='grabbing';break;
+    }
+  }
+});
+
 cv.addEventListener('mousemove',ev=>{
-  const r=cv.getBoundingClientRect();
-  const mx=(ev.clientX-r.left)*(cv.width/r.width);
-  const my=(ev.clientY-r.top)*(cv.height/r.height);
+  const{mx,my}=getMouse(ev);
+  if(dragging){
+    dragging.x=mx-dragOffX;
+    dragging.y=my-dragOffY;
+    dragMoved=true;
+    tooltip.style.display='none';
+    draw();return;
+  }
   hoveredNode=null;hoveredEdge=null;
   const{an}=getActive();
-  for(const n of nodes)if(!removedNodes.has(n.id)&&nodeHit(n,mx,my)){hoveredNode=n.id;break}
+  for(const n of nodes)if(nodeHit(n,mx,my)){hoveredNode=n.id;break}
   if(hoveredNode===null){
     for(const e of edges)if(!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b)&&edgeHit(e,mx,my)){hoveredEdge=e;break}
   }
   if(hoveredNode!==null){
     const n=nodes[hoveredNode];
+    const isRemoved=removedNodes.has(n.id);
     const isCrit=criticalNodes.has(n.id);
     tooltip.style.display='block';
     tooltip.style.left=(ev.offsetX+14)+'px';tooltip.style.top=(ev.offsetY-12)+'px';
-    tooltip.innerHTML='<b>'+n.name+'</b><br>'+(isCrit?'<span style="color:#f85149">&#9888; Subestaci\u00f3n cr\u00edtica</span>':'Subestaci\u00f3n normal')+'<br><span style="color:#8b949e">Clic para seleccionar</span>';
+    if(isRemoved){
+      tooltip.innerHTML='<b>'+n.name+'</b><br><span style="color:#e3b341">Nodo eliminado</span><br><span style="color:#8b949e">Clic para restaurar</span>';
+    }else{
+      tooltip.innerHTML='<b>'+n.name+'</b><br>'+(isCrit?'<span style="color:#f85149">&#9888; Subestaci\u00f3n cr\u00edtica</span>':'Subestaci\u00f3n normal')+'<br><span style="color:#8b949e">Clic para seleccionar &bull; Arrastrar para mover</span>';
+    }
     cv.style.cursor='pointer';
   }else if(hoveredEdge!==null){
     const e=hoveredEdge;
     const mstSet=new Set(mstEdges.map(x=>x.id));
     tooltip.style.display='block';
     tooltip.style.left=(ev.offsetX+14)+'px';tooltip.style.top=(ev.offsetY-12)+'px';
-    tooltip.innerHTML='<b>'+nodes[e.a].name+' \u2013 '+nodes[e.b].name+'</b><br>Costo: $'+e.w+'M<br>'+(mstSet.has(e.id)?'<span style="color:#3fb950">Parte del MST</span>':'No MST')+'<br><span style="color:#8b949e">Clic para simular fallo</span>';
+    tooltip.innerHTML='<b>'+nodes[e.a].name+' \u2013 '+nodes[e.b].name+'</b><br>$'+e.w+'M &bull; '+(mstSet.has(e.id)?'<span style="color:#3fb950">Parte del MST</span>':'No MST')+'<br><span style="color:#8b949e">Clic para simular fallo</span>';
     cv.style.cursor='pointer';
   }else{
     tooltip.style.display='none';cv.style.cursor='crosshair';
@@ -500,13 +563,48 @@ cv.addEventListener('mousemove',ev=>{
   draw();
 });
 
-cv.addEventListener('mouseleave',()=>{tooltip.style.display='none';hoveredEdge=null;hoveredNode=null;draw()});
+cv.addEventListener('mouseup',ev=>{
+  if(dragging&&!dragMoved){
+    // fue un clic, no arrastre
+    const n=dragging;dragging=null;cv.style.cursor='crosshair';
+    handleNodeClick(n);return;
+  }
+  dragging=null;cv.style.cursor='crosshair';
+});
+
+cv.addEventListener('mouseleave',()=>{
+  dragging=null;tooltip.style.display='none';
+  hoveredEdge=null;hoveredNode=null;cv.style.cursor='crosshair';draw();
+});
+
+function handleNodeClick(n){
+  if(stepping){return}
+  // Si está eliminado, seleccionarlo para restaurar
+  if(removedNodes.has(n.id)){
+    selectedNode=selectedNode===n.id?null:n.id;
+    updateNodeUI();
+    if(selectedNode!==null){
+      setInfo('<b>'+n.name+' eliminada</b><br>Presiona <b>Restaurar nodo</b> para reconectarla con todas sus conexiones.');
+      log('Nodo eliminado '+n.name+' seleccionado','lwarn');
+    }
+    draw();return;
+  }
+  // Nodo activo
+  selectedNode=selectedNode===n.id?null:n.id;
+  updateNodeUI();
+  if(selectedNode!==null){
+    const isCrit=criticalNodes.has(n.id);
+    setInfo('<b>'+n.name+' seleccionada</b><br>'+(isCrit?'<span style="color:#f85149">&#9888; Subestaci\u00f3n cr\u00edtica.</span>':'Subestaci\u00f3n normal.<br>Usa el bot\u00f3n para simular fallo.'));
+    log('Nodo '+n.name+(criticalNodes.has(n.id)?' [CR\u00cdTICO]':''),'linfo');
+  }else{
+    setInfo('<b>Selecci\u00f3n cancelada</b>');
+  }
+  draw();
+}
 
 cv.addEventListener('click',ev=>{
-  const r=cv.getBoundingClientRect();
-  const mx=(ev.clientX-r.left)*(cv.width/r.width);
-  const my=(ev.clientY-r.top)*(cv.height/r.height);
-
+  if(dragging||dragMoved)return;
+  const{mx,my}=getMouse(ev);
   if(stepping){
     if(stepIdx>=stepEdges.length){
       stepping=false;document.getElementById('btn-step').classList.remove('active');
@@ -519,30 +617,17 @@ cv.addEventListener('click',ev=>{
     if(ok){
       mstEdges.push(e);
       log('+ '+na+'\u2013'+nb+' $'+e.w+'M agregada','lok');
-      setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#3fb950">\u2713 '+na+'\u2013'+nb+' ($'+e.w+'M) AGREGADA</span><br>No forma ciclo.');
+      setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#3fb950">\u2713 '+na+'\u2013'+nb+' AGREGADA</span><br>No forma ciclo.');
     }else{
       log('\u2717 '+na+'\u2013'+nb+' rechazada (ciclo)','lwarn');
       setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#f85149">\u2717 '+na+'\u2013'+nb+' RECHAZADA</span><br>Crear\u00eda un ciclo.');
     }
     stepIdx++;draw();return;
   }
-
-  const{an}=getActive();
-  for(const n of nodes){
-    if(!removedNodes.has(n.id)&&nodeHit(n,mx,my)){
-      selectedNode=selectedNode===n.id?null:n.id;
-      updateNodeUI();
-      if(selectedNode!==null){
-        const isCrit=criticalNodes.has(n.id);
-        setInfo('<b>'+n.name+' seleccionada</b><br>'+(isCrit?'<span style="color:#f85149">&#9888; Subestaci\u00f3n cr\u00edtica.</span>':'Subestaci\u00f3n normal.<br>Usa el bot\u00f3n para simular fallo.'));
-        log('Nodo '+n.name+' seleccionado'+(criticalNodes.has(n.id)?' [CR\u00cdTICO]':''),'linfo');
-      }else{
-        setInfo('<b>Selecci\u00f3n cancelada</b>');
-      }
-      draw();return;
-    }
-  }
+  for(const n of nodes){if(nodeHit(n,mx,my)){handleNodeClick(n);return}}
+  // clic en arista
   selectedNode=null;updateNodeUI();
+  const{an}=getActive();
   for(const e of edges){
     if(!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b)&&edgeHit(e,mx,my)){
       failEdge(e);return;
@@ -553,9 +638,20 @@ cv.addEventListener('click',ev=>{
 
 function resize(){
   const wrap=document.getElementById('canvas-wrap');
-  cv.width=wrap.clientWidth;cv.height=wrap.clientHeight;
-  initPos();recalc();draw();
+  const W=wrap.clientWidth,H=wrap.clientHeight;
+  const hadNodes=nodes.length>0;
+  const prevW=cv.width,prevH=cv.height;
+  cv.width=W;cv.height=H;
+  if(hadNodes&&prevW>0&&prevH>0){
+    // escalar posiciones existentes
+    nodes.forEach(n=>{n.x=n.x*(W/prevW);n.y=n.y*(H/prevH)});
+    edges=ED.map(e=>({...e}));
+  }else{
+    initPos();
+  }
+  recalc();draw();
 }
+
 window.addEventListener('resize',resize);
 resize();
 log('MST calculado: $431M (Kruskal + Union-Find)','lok');
