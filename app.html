@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Simulador Red Eléctrica — UCC 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0c12;color:#e0e0e0;font-family:'Courier New',monospace;height:100vh;overflow:hidden}
+#app{display:grid;grid-template-columns:1fr 300px;height:100vh}
+canvas{display:block;width:100%;height:100%;cursor:crosshair}
+#sidebar{background:#12151f;border-left:1px solid #1e2235;display:flex;flex-direction:column;overflow-y:auto}
+.section{padding:12px 14px;border-bottom:1px solid #1e2235}
+.sec-title{font-size:10px;font-weight:700;color:#4a5080;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.metric{background:#0a0c12;border-radius:6px;padding:8px 10px;border:1px solid #1e2235}
+.ml{font-size:10px;color:#4a5080;margin-bottom:2px}
+.mv{font-size:16px;font-weight:700}
+.mv.g{color:#4ade80}.mv.r{color:#f87171}.mv.a{color:#fbbf24}.mv.b{color:#60a5fa}
+.status{padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;margin-bottom:6px}
+.s-ok{background:#052e16;color:#4ade80;border:1px solid #166534}
+.s-warn{background:#1c1003;color:#fbbf24;border:1px solid #92400e}
+.s-err{background:#1c0505;color:#f87171;border:1px solid #991b1b}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.btn{padding:7px 8px;border-radius:6px;border:1px solid #1e2235;background:#0a0c12;color:#9ca3af;font-size:10px;cursor:pointer;font-family:'Courier New',monospace;transition:all .15s;text-align:center}
+.btn:hover{background:#1e2235;color:#e0e0e0}
+.btn.full{grid-column:1/-1}
+.btn.primary{border-color:#1d4ed8;color:#60a5fa;background:#0c1e3a}
+.btn.primary:hover{background:#1d4ed8;color:#fff}
+.btn.success{border-color:#166534;color:#4ade80;background:#052e16}
+.btn.success:hover{background:#166534;color:#fff}
+.btn.danger{border-color:#991b1b;color:#f87171;background:#1c0505}
+.btn.danger:hover{background:#991b1b;color:#fff}
+.btn.warn{border-color:#92400e;color:#fbbf24;background:#1c1003}
+.btn.warn:hover{background:#92400e;color:#fff}
+.btn.active{background:#166534;border-color:#4ade80;color:#4ade80}
+.legend{display:flex;flex-direction:column;gap:5px}
+.li{display:flex;align-items:center;gap:8px;font-size:11px;color:#6b7280}
+.ld{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.ll{width:20px;height:3px;border-radius:1px;flex-shrink:0}
+#info{background:#0a0c12;border-radius:6px;padding:10px;font-size:11px;color:#6b7280;border:1px solid #1e2235;line-height:1.7;min-height:60px}
+#info b{color:#e0e0e0}
+#log-box{background:#060810;border-radius:6px;padding:8px;font-size:10px;max-height:120px;overflow-y:auto;border:1px solid #1e2235}
+#log-box p{margin:1px 0;line-height:1.6}
+.lok{color:#4ade80}.lwarn{color:#fbbf24}.lerr{color:#f87171}.linfo{color:#60a5fa}
+#algo-toggle{display:flex;border-radius:6px;overflow:hidden;border:1px solid #1e2235}
+.algo-btn{flex:1;padding:6px;font-size:10px;cursor:pointer;border:none;background:#0a0c12;color:#4a5080;font-family:'Courier New',monospace;transition:all .15s}
+.algo-btn.active{background:#1d4ed8;color:#fff}
+#tooltip{position:absolute;background:#12151f;border:1px solid #374151;border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;display:none;z-index:10;color:#e0e0e0}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="canvas-wrap" style="position:relative;overflow:hidden">
+  <canvas id="cv"></canvas>
+  <div id="tooltip"></div>
+</div>
+<div id="sidebar">
+  <div class="section">
+    <div class="sec-title">Simulador Red Eléctrica — UCC 2026</div>
+    <div id="status" class="status s-ok">Red operativa — MST óptimo activo</div>
+    <div class="metrics">
+      <div class="metric"><div class="ml">Costo MST</div><div class="mv g" id="m-mst">$427M</div></div>
+      <div class="metric"><div class="ml">Red completa</div><div class="mv b" id="m-total">$1255M</div></div>
+      <div class="metric"><div class="ml">Ahorro</div><div class="mv a" id="m-save">$828M</div></div>
+      <div class="metric"><div class="ml">Nodos activos</div><div class="mv" id="m-nodes">15/15</div></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-title">Algoritmo MST</div>
+    <div id="algo-toggle">
+      <button class="algo-btn active" onclick="setAlgo('kruskal')">Kruskal</button>
+      <button class="algo-btn" onclick="setAlgo('prim')">Prim</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-title">Controles</div>
+    <div class="btn-grid">
+      <button class="btn success full" onclick="resetAll()">↺ Reiniciar red completa</button>
+      <button class="btn warn" onclick="undoLast()">↩ Deshacer último</button>
+      <button class="btn primary" onclick="randomFail()">⚡ Fallo aleatorio</button>
+      <button class="btn danger" onclick="failCritical()">☠ Fallo en S10</button>
+      <button class="btn" onclick="toggleMSTOnly()" id="btn-mst-only">👁 Solo MST</button>
+      <button class="btn" onclick="stepMode()" id="btn-step">▶ Paso a paso</button>
+      <button class="btn full" id="btn-restore" style="display:none" onclick="restoreLast()">⟳ Restaurar última línea</button>
+      <button class="btn danger full" id="btn-remove-node" style="display:none" onclick="removeSelectedNode()">✕ Eliminar nodo seleccionado</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-title">Información</div>
+    <div id="info"><b>Cómo usar:</b><br>• Clic en una <b>línea</b> → simula fallo<br>• Clic en un <b>nodo</b> → lo selecciona<br>• Hover → ver detalle</div>
+  </div>
+  <div class="section">
+    <div class="sec-title">Leyenda</div>
+    <div class="legend">
+      <div class="li"><div class="ld" style="background:#2563eb"></div>Subestación normal</div>
+      <div class="li"><div class="ld" style="background:#dc2626"></div>Subestación crítica</div>
+      <div class="li"><div class="ld" style="background:#7c3aed"></div>Nodo seleccionado</div>
+      <div class="li"><div class="ll" style="background:#4ade80;height:3px"></div>MST — red óptima</div>
+      <div class="li"><div class="ll" style="background:#1e2235;height:1px"></div>Conexión no MST</div>
+      <div class="li"><div class="ll" style="background:#dc2626;height:2px"></div>Línea fallida</div>
+      <div class="li"><div class="ll" style="background:#fbbf24;height:3px"></div>Ruta alternativa</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-title">Log del sistema</div>
+    <div id="log-box"><p class="linfo">> Sistema iniciado</p></div>
+  </div>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+const tooltip=document.getElementById('tooltip');
+const ND=[{id:0,name:'S1'},{id:1,name:'S2'},{id:2,name:'S3'},{id:3,name:'S4'},{id:4,name:'S5'},{id:5,name:'S6'},{id:6,name:'S7'},{id:7,name:'S8'},{id:8,name:'S9'},{id:9,name:'S10'},{id:10,name:'S11'},{id:11,name:'S12'},{id:12,name:'S13'},{id:13,name:'S14'},{id:14,name:'S15'}];
+const ED=[{id:0,a:0,b:1,w:13},{id:1,a:0,b:3,w:27},{id:2,a:0,b:4,w:96},{id:3,a:0,b:7,w:13},{id:4,a:1,b:2,w:41},{id:5,a:1,b:8,w:37},{id:6,a:1,b:6,w:55},{id:7,a:1,b:14,w:58},{id:8,a:2,b:11,w:64},{id:9,a:2,b:3,w:53},{id:10,a:3,b:9,w:74},{id:11,a:4,b:5,w:21},{id:12,a:4,b:6,w:64},{id:13,a:4,b:12,w:15},{id:14,a:4,b:13,w:90},{id:15,a:5,b:13,w:87},{id:16,a:6,b:14,w:38},{id:17,a:7,b:9,w:45},{id:18,a:7,b:11,w:78},{id:19,a:8,b:11,w:35},{id:20,a:9,b:10,w:13},{id:21,a:9,b:14,w:56},{id:22,a:11,b:12,w:93},{id:23,a:11,b:13,w:79},{id:24,a:6,b:14,w:38}];
+let nodes=[],edges=[],removedEdges=new Set(),removedNodes=new Set(),mstEdges=[],criticalNodes=new Set(),altPath=[],history=[],selectedNode=null,algo='kruskal',mstOnly=false,stepping=false,stepIdx=0,stepEdges=[],hoveredEdge=null,hoveredNode=null;
+function initPos(){const W=cv.width,H=cv.height,pos=[[.50,.45],[.68,.25],[.82,.48],[.68,.70],[.45,.12],[.28,.10],[.12,.25],[.10,.48],[.18,.72],[.35,.85],[.55,.88],[.75,.85],[.88,.68],[.92,.40],[.85,.18]];nodes=ND.map((n,i)=>({...n,x:pos[i][0]*W,y:pos[i][1]*H}));edges=ED.map(e=>({...e}))}
+function uf(n){const p=Array.from({length:n},(_,i)=>i),r=new Array(n).fill(0);function find(x){if(p[x]!==x)p[x]=find(p[x]);return p[x]}function union(x,y){const px=find(x),py=find(y);if(px===py)return false;if(r[px]<r[py])p[px]=py;else if(r[px]>r[py])p[py]=px;else{p[py]=px;r[px]++}return true}return{find,union}}
+function kruskal(ae,an){const arr=[...an],nm={};arr.forEach((n,i)=>nm[n]=i);const u=uf(arr.length),s=[...ae].sort((a,b)=>a.w-b.w),mst=[];let cost=0;for(const e of s){if(!(e.a in nm)||!(e.b in nm))continue;if(u.union(nm[e.a],nm[e.b])){mst.push(e);cost+=e.w;if(mst.length===arr.length-1)break}}return{mst,cost}}
+function prim(ae,an){if(an.size===0)return{mst:[],cost:0};const start=[...an][0],visited=new Set([start]),mst=[];let cost=0;const adj={};an.forEach(n=>{adj[n]=[]});ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e);adj[e.b].push(e)}});while(visited.size<an.size){let best=null;for(const v of visited)for(const e of(adj[v]||[])){const nb=e.a===v?e.b:e.a;if(!visited.has(nb)&&(!best||e.w<best.w))best=e}if(!best)break;mst.push(best);cost+=best.w;const nb=visited.has(best.a)?best.b:best.a;visited.add(nb)}return{mst,cost}}
+function bfs(from,to,ae,an){const adj={};an.forEach(n=>{adj[n]=[]});ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e.b);adj[e.b].push(e.a)}});const q=[[from]],v=new Set([from]);while(q.length){const path=q.shift(),node=path[path.length-1];if(node===to)return path;for(const nb of(adj[node]||[]))if(!v.has(nb)){v.add(nb);q.push([...path,nb])}}return null}
+function artics(ae,an){const adj={};an.forEach(n=>{adj[n]=[]});ae.forEach(e=>{if(an.has(e.a)&&an.has(e.b)){adj[e.a].push(e.b);adj[e.b].push(e.a)}});const disc={},low={},par={},vis={},arts=new Set();let t=0;function dfs(u){vis[u]=true;disc[u]=low[u]=t++;let ch=0;for(const v of(adj[u]||[])){if(!vis[v]){ch++;par[v]=u;dfs(v);low[u]=Math.min(low[u],low[v]);if(par[u]===undefined&&ch>1)arts.add(u);if(par[u]!==undefined&&low[v]>=disc[u])arts.add(u)}else if(v!==par[u])low[u]=Math.min(low[u],disc[v])}};for(const n of an)if(!vis[n]){par[n]=undefined;dfs(n)}return arts}
+function getActive(){const an=new Set();nodes.forEach(n=>{if(!removedNodes.has(n.id))an.add(n.id)});const ae=edges.filter(e=>!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b));return{an,ae}}
+function recalc(){const{an,ae}=getActive();const res=algo==='kruskal'?kruskal(ae,an):prim(ae,an);mstEdges=res.mst;criticalNodes=artics(ae,an);const tc=ae.reduce((s,e)=>s+e.w,0);const conn=res.mst.length===an.size-1&&an.size>0;document.getElementById('m-mst').textContent='$'+res.cost+'M';document.getElementById('m-total').textContent='$'+tc+'M';document.getElementById('m-save').textContent='$'+(tc-res.cost)+'M';document.getElementById('m-nodes').textContent=an.size+'/15';const sb=document.getElementById('status');if(removedEdges.size===0&&removedNodes.size===0){sb.className='status s-ok';sb.textContent='Red operativa — MST óptimo activo'}else if(conn){sb.className='status s-warn';sb.textContent='Fallo activo — Red redirigida'}else{sb.className='status s-err';sb.textContent='Red desconectada — Nodos aislados'};return{an,ae,conn}}
+function log(msg,type='linfo'){const lb=document.getElementById('log-box');const p=document.createElement('p');p.className=type;p.textContent='> '+msg;lb.appendChild(p);lb.scrollTop=lb.scrollHeight}
+function setInfo(html){document.getElementById('info').innerHTML=html}
+function draw(){ctx.clearRect(0,0,cv.width,cv.height);const{an}=getActive();const mstSet=new Set(mstEdges.map(e=>e.id));const altSet=new Set();if(altPath.length>1){for(let i=0;i<altPath.length-1;i++){const a=altPath[i],b=altPath[i+1];edges.forEach(e=>{if(!removedEdges.has(e.id)&&((e.a===a&&e.b===b)||(e.a===b&&e.b===a)))altSet.add(e.id)})}}
+edges.forEach(e=>{if(!an.has(e.a)||!an.has(e.b))return;if(mstOnly&&!mstSet.has(e.id)&&!removedEdges.has(e.id))return;const na=nodes[e.a],nb=nodes[e.b],isH=hoveredEdge&&hoveredEdge.id===e.id;ctx.beginPath();ctx.moveTo(na.x,na.y);ctx.lineTo(nb.x,nb.y);if(removedEdges.has(e.id)){ctx.strokeStyle='#dc2626';ctx.lineWidth=2;ctx.setLineDash([6,4])}else if(altSet.has(e.id)){ctx.strokeStyle='#fbbf24';ctx.lineWidth=4;ctx.setLineDash([])}else if(mstSet.has(e.id)){ctx.strokeStyle=isH?'#86efac':'#4ade80';ctx.lineWidth=2.5;ctx.setLineDash([])}else{ctx.strokeStyle=isH?'#374151':'#1e2235';ctx.lineWidth=1;ctx.setLineDash([4,3])};ctx.stroke();ctx.setLineDash([]);const mx=(na.x+nb.x)/2,my=(na.y+nb.y)/2;const fc=removedEdges.has(e.id)?'#f87171':altSet.has(e.id)?'#fbbf24':mstSet.has(e.id)?'#86efac':'#374151';ctx.fillStyle=fc;ctx.font='9px monospace';ctx.textAlign='center';ctx.fillText('$'+e.w+'M',mx,my-7)});
+nodes.forEach(n=>{if(removedNodes.has(n.id)){ctx.beginPath();ctx.arc(n.x,n.y,16,0,Math.PI*2);ctx.fillStyle='#1c0505';ctx.fill();ctx.strokeStyle='#991b1b';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#f87171';ctx.font='9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.name,n.x,n.y);return}const isCrit=criticalNodes.has(n.id),isSel=selectedNode===n.id,isH=hoveredNode===n.id;if(isCrit&&!isSel){ctx.beginPath();ctx.arc(n.x,n.y,22,0,Math.PI*2);ctx.strokeStyle='#fca5a5';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([])}let fill=isCrit?'#dc2626':'#2563eb';if(isSel)fill='#7c3aed';if(isH&&!isSel)fill=isCrit?'#ef4444':'#3b82f6';ctx.beginPath();ctx.arc(n.x,n.y,16,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=isSel?'#c4b5fd':isCrit?'#fca5a5':'#1e3a5f';ctx.lineWidth=isSel?2.5:1.5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.name,n.x,n.y)})}
+function failEdge(e){removedEdges.add(e.id);history.push({type:'edge',id:e.id});const{an,ae}=getActive();const path=bfs(e.a,e.b,ae,an);altPath=path||[];document.getElementById('btn-restore').style.display='block';const na=nodes[e.a].name,nb=nodes[e.b].name;const{conn}=recalc();if(path){const route=path.map(i=>nodes[i].name).join(' → ');log('Fallo '+na+'–'+nb+' | Ruta: '+route,'lwarn');setInfo('<b>Fallo: '+na+'–'+nb+' ($'+e.w+'M)</b><br><b>Ruta alternativa:</b><br><span style="color:#fbbf24">'+route+'</span>')}else{log('Fallo '+na+'–'+nb+' — Sin ruta','lerr');setInfo('<b>Fallo: '+na+'–'+nb+'</b><br><span style="color:#f87171">Sin ruta alternativa.<br>Sección aislada.</span>')};draw()}
+function resetAll(){removedEdges=new Set();removedNodes=new Set();altPath=[];history=[];selectedNode=null;mstOnly=false;stepping=false;document.getElementById('btn-restore').style.display='none';document.getElementById('btn-remove-node').style.display='none';document.getElementById('btn-mst-only').classList.remove('active');document.getElementById('btn-step').classList.remove('active');recalc();log('Red reiniciada','lok');setInfo('<b>Red reiniciada.</b><br>MST óptimo: $427M');draw()}
+function undoLast(){if(!history.length){log('Nada que deshacer','lwarn');return}const last=history.pop();if(last.type==='edge'){removedEdges.delete(last.id);altPath=[]}else removedNodes.delete(last.id);if(!removedEdges.size)document.getElementById('btn-restore').style.display='none';recalc();log('Acción deshecha','lok');draw()}
+function restoreLast(){if(!removedEdges.size)return;const last=[...removedEdges].pop();removedEdges.delete(last);altPath=[];history=history.filter(h=>!(h.type==='edge'&&h.id===last));if(!removedEdges.size)document.getElementById('btn-restore').style.display='none';recalc();log('Línea restaurada','lok');draw()}
+function randomFail(){const{an,ae}=getActive();const av=ae.filter(e=>!removedEdges.has(e.id));if(!av.length){log('No hay líneas disponibles','lwarn');return}failEdge(av[Math.floor(Math.random()*av.length)])}
+function failCritical(){const s10=nodes.find(n=>n.name==='S10');if(removedNodes.has(s10.id)){log('S10 ya eliminada','lwarn');return}removedNodes.add(s10.id);history.push({type:'node',id:s10.id});altPath=[];selectedNode=null;document.getElementById('btn-remove-node').style.display='none';recalc();log('Fallo crítico en S10','lerr');setInfo('<b>Fallo crítico: S10</b><br>S11 queda completamente aislada.');draw()}
+function toggleMSTOnly(){mstOnly=!mstOnly;document.getElementById('btn-mst-only').classList.toggle('active',mstOnly);log(mstOnly?'Solo MST':'Red completa','linfo');draw()}
+function stepMode(){stepping=!stepping;document.getElementById('btn-step').classList.toggle('active',stepping);if(stepping){const{an,ae}=getActive();stepEdges=[...ae].sort((a,b)=>a.w-b.w);stepIdx=0;mstEdges=[];log('Modo paso a paso activado','linfo');setInfo('<b>Modo paso a paso</b><br>Haz clic en el canvas para avanzar.')}else{recalc();draw()}}
+function setAlgo(a){algo=a;document.querySelectorAll('.algo-btn').forEach((b,i)=>b.classList.toggle('active',i===(a==='kruskal'?0:1)));recalc();log('Algoritmo: '+a.toUpperCase(),'linfo');draw()}
+function removeSelectedNode(){if(selectedNode===null)return;const n=nodes[selectedNode];removedNodes.add(selectedNode);history.push({type:'node',id:selectedNode});altPath=[];selectedNode=null;document.getElementById('btn-remove-node').style.display='none';recalc();log('Nodo '+n.name+' eliminado','lwarn');draw()}
+function nodeHit(n,mx,my){return Math.sqrt((mx-n.x)**2+(my-n.y)**2)<18}
+function edgeHit(e,mx,my){const a=nodes[e.a],b=nodes[e.b],dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return false;const t=((mx-a.x)*dx+(my-a.y)*dy)/(len*len);if(t<0.1||t>0.9)return false;const px=a.x+t*dx,py=a.y+t*dy;return Math.sqrt((mx-px)**2+(my-py)**2)<9}
+cv.addEventListener('mousemove',ev=>{const r=cv.getBoundingClientRect(),mx=(ev.clientX-r.left)*(cv.width/r.width),my=(ev.clientY-r.top)*(cv.height/r.height);hoveredNode=null;hoveredEdge=null;const{an}=getActive();for(const n of nodes)if(!removedNodes.has(n.id)&&nodeHit(n,mx,my)){hoveredNode=n.id;break}if(hoveredNode===null)for(const e of edges)if(!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b)&&edgeHit(e,mx,my)){hoveredEdge=e;break}if(hoveredNode!==null){const n=nodes[hoveredNode];tooltip.style.display='block';tooltip.style.left=(ev.offsetX+12)+'px';tooltip.style.top=(ev.offsetY-10)+'px';tooltip.innerHTML='<b>'+n.name+'</b><br>'+(criticalNodes.has(n.id)?'⚠ Subestación CRÍTICA':'Subestación normal');cv.style.cursor='pointer'}else if(hoveredEdge!==null){const e=hoveredEdge,mstSet=new Set(mstEdges.map(x=>x.id));tooltip.style.display='block';tooltip.style.left=(ev.offsetX+12)+'px';tooltip.style.top=(ev.offsetY-10)+'px';tooltip.innerHTML='<b>'+nodes[e.a].name+'–'+nodes[e.b].name+'</b><br>$'+e.w+'M | '+(mstSet.has(e.id)?'Parte del MST':'No MST')+'<br><i>Clic para simular fallo</i>';cv.style.cursor='pointer'}else{tooltip.style.display='none';cv.style.cursor='crosshair'}draw()});
+cv.addEventListener('mouseleave',()=>{tooltip.style.display='none';hoveredEdge=null;hoveredNode=null;draw()});
+cv.addEventListener('click',ev=>{const r=cv.getBoundingClientRect(),mx=(ev.clientX-r.left)*(cv.width/r.width),my=(ev.clientY-r.top)*(cv.height/r.height);if(stepping){if(stepIdx>=stepEdges.length){stepping=false;recalc();draw();return}const e=stepEdges[stepIdx];const u=uf(15);mstEdges.forEach(me=>u.union(me.a,me.b));const ok=u.union(e.a,e.b);const na=nodes[e.a].name,nb=nodes[e.b].name;if(ok){mstEdges.push(e);log('+ '+na+'–'+nb+' $'+e.w+'M agregada','lok');setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#4ade80">✓ '+na+'–'+nb+' ($'+e.w+'M) AGREGADA</span><br>No forma ciclo.')}else{log('✗ '+na+'–'+nb+' rechazada (ciclo)','lwarn');setInfo('<b>Paso '+(stepIdx+1)+'</b><br><span style="color:#f87171">✗ '+na+'–'+nb+' RECHAZADA</span><br>Formaría un ciclo.')};stepIdx++;draw();return}const{an}=getActive();for(const n of nodes){if(!removedNodes.has(n.id)&&nodeHit(n,mx,my)){selectedNode=selectedNode===n.id?null:n.id;document.getElementById('btn-remove-node').style.display=selectedNode!==null?'block':'none';if(selectedNode!==null){const isCrit=criticalNodes.has(n.id);setInfo('<b>'+n.name+' seleccionada</b><br>'+(isCrit?'<span style="color:#f87171">⚠ CRÍTICA — su fallo desconecta la red</span>':'Subestación normal.'));log('Nodo '+n.name+' seleccionado'+(isCrit?' [CRÍTICO]':''),'linfo')}else setInfo('<b>Selección cancelada</b>');draw();return}}selectedNode=null;document.getElementById('btn-remove-node').style.display='none';for(const e of edges){if(!removedEdges.has(e.id)&&an.has(e.a)&&an.has(e.b)&&edgeHit(e,mx,my)){failEdge(e);return}}altPath=[];draw()});
+function resize(){const wrap=document.getElementById('canvas-wrap');cv.width=wrap.clientWidth;cv.height=wrap.clientHeight;initPos();recalc();draw()}
+window.addEventListener('resize',resize);
+resize();
+</script>
+</body>
+</html>
