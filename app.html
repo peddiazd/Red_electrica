@@ -567,8 +567,24 @@ cv.addEventListener('mouseup',ev=>{
   if(dragging&&dragMoved){
     dragging=null;cv.style.cursor='crosshair';draw();return;
   }
+  if(dragMoved) savePositions();
   dragging=null;cv.style.cursor='crosshair';
 });
+
+function savePositions(){
+  const pos={};nodes.forEach(n=>{pos[n.id]={x:n.x,y:n.y}});
+  localStorage.setItem('red_electrica_pos',JSON.stringify(pos));
+}
+
+function loadPositions(){
+  try{
+    const saved=localStorage.getItem('red_electrica_pos');
+    if(!saved)return false;
+    const pos=JSON.parse(saved);
+    nodes.forEach(n=>{if(pos[n.id]){n.x=pos[n.id].x;n.y=pos[n.id].y}});
+    return true;
+  }catch(e){return false}
+}
 
 cv.addEventListener('mouseleave',()=>{
   dragging=null;tooltip.style.display='none';
@@ -651,7 +667,11 @@ function resize(){
 }
 
 window.addEventListener('resize',resize);
-resize();
+const wrap=document.getElementById('canvas-wrap');
+cv.width=wrap.clientWidth;cv.height=wrap.clientHeight;
+initPos();
+loadPositions();
+recalc();draw();
 log('MST calculado: $431M (Kruskal + Union-Find)','lok');
 log('Sin subestaciones cr\u00edticas \u2014 red con respaldo completo','lok');
 </script>
