@@ -49,14 +49,29 @@ prácticamente instantáneos, pero en redes de cientos de
 subestaciones la diferencia entre algoritmos se vuelve relevante.
 
 ## 4.4 Requisitos funcionales
-[Copia los RF del documento de la actividad]
+
+- RF-01: Visualizar la red eléctrica con pesos en las conexiones
+- RF-02: Calcular y resaltar el MST usando Prim o Kruskal
+- RF-03: Mostrar el costo total del MST vs el costo total 
+  de la red completa
+- RF-04: Simular el fallo de una línea y actualizar 
+  la visualización
+- RF-05: Identificar y resaltar las subestaciones de articulación
+- RF-06: Encontrar la ruta alternativa de menor costo 
+  tras un fallo
 
 ## 4.5 Requisitos no funcionales
-[Copia los RNF del documento de la actividad]
+
+- RNF-01: El cálculo del MST debe completarse en menos de 
+  2 segundos para 50 nodos
+- RNF-02: La simulación de fallo debe actualizarse 
+  visualmente en tiempo real
+- RNF-03: El código debe documentar claramente qué algoritmo 
+  se usa y por qué
+- RNF-04: La interfaz debe mostrar el MST con un color 
+  distinto al grafo completo
 
 ## 4.6 Preguntas de reflexión
-## 4.6 Preguntas de reflexión
-
 ### Pregunta 1: ¿Cuándo preferirías Prim sobre Kruskal?
 
 Kruskal trabaja de forma global: ordena todas las aristas por costo 
